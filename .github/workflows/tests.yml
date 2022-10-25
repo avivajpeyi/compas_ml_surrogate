@@ -1,0 +1,42 @@
+name: Tests
+on:
+  push:
+    branches:
+      - main
+    paths:
+    - src/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/**
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U -e ".[dev]"
+
+      # Verify pre-commits valid
+      - name: pre-commit
+        run: pre-commit run --all-files --verbose --show-diff-on-failure
+
+      # Run all test other than ones marked as "slow"
+      - name: pytest
+        run: python -m pytest -vv $TEST_FILE -k "not slow"
+        if: always()
