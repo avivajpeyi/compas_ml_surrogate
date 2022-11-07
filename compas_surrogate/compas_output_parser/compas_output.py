@@ -1,27 +1,38 @@
 import os
-import h5py
 import pandas as pd
-from .h5utils import recursively_load_dict_contents_from_group
-from typing import Optional
+from .h5_parser import parse_h5_file
+from typing import Optional, Dict, List
+import uuid
+
+from .html_templates import html_template, element_template, css
 
 
 class CompasOutput:
     def __init__(
             self,
             outdir: str,
-            Run_Details: Optional[dict] = None,
+            Run_Details: Dict[str, List],
+            BSE_System_Parameters: pd.DataFrame,
             BSE_Supernovae: Optional[pd.DataFrame] = None,
-            BSE_System_Parameters: Optional[pd.DataFrame] = None,
             BSE_Common_Envelopes: Optional[pd.DataFrame] = None,
             BSE_RLOF: Optional[pd.DataFrame] = None,
     ):
         """
 
-        :param outdir:
+        :param outdir: Directory where the COMPAS output is stored (should contain COMPAS_Output.h5)
+        :type outdir: str
         :param Run_Details: Configs for the run
-        :param BSE_Supernovae: pd.DataFrame of supernovae
-        :param BSE_System_Parameters: pd.DataFrame of system parameters
+        :type Run_Details: Dict[str, List]
+        :param BSE_System_Parameters: All system parameters with one unique row per binary (i.e. one row per 'SEED')
+        :type BSE_System_Parameters: pd.DataFrame
+        :param BSE_Supernovae: Supernovae data for the run
+        :type BSE_Supernovae: Optional[pd.DataFrame]
+        :param BSE_Common_Envelopes: Common Envelope data for the run
+        :type BSE_Common_Envelopes: Optional[pd.DataFrame]
+        :param BSE_RLOF: Roche Lobe Overflow data for the run
+        :type BSE_RLOF: Optional[pd.DataFrame]
         """
+
         self.outdir = outdir
         self.Run_Details = Run_Details
         self.BSE_Supernovae = BSE_Supernovae
@@ -34,16 +45,21 @@ class CompasOutput:
     def __getitem__(self, item):
         return self.get_binary(index=item)
 
-    def get_binary(self, index=None, seed=None):
+    def get_binary(self, index=None, seed=None) -> Dict:
+        """
+        Get a binary by row index or seed
+        :param index: int row index
+        :param seed: int unique binary seed
+        """
         all_seeds = self.BSE_System_Parameters.SEED
         if index is not None:
             seed = all_seeds.iloc[index]
         else:
             index = self.BSE_System_Parameters[all_seeds == seed].index[0]
-        data = {}
+        data = dict(index=index, SEED=seed)
         if self.detailed_output_exists:
             det_fn = os.path.join(self.outdir, "Detailed_Output", f"BSE_Detailed_Output_{index}.h5")
-            data["detailed_output"] = load_compas_detailed_output(det_fn)
+            data["detailed_output"] = pd.DataFrame(parse_h5_file(det_fn))
         for key in self.__dict__:
             val = self.__dict__[key]
             if isinstance(val, pd.DataFrame):
@@ -58,17 +74,15 @@ class CompasOutput:
         return data
 
     @classmethod
-    def from_hdf5(cls, outdir):
+    def from_h5(cls, outdir):
         """
-        Loads a COMPAS output file from HDF5 format.
+        Loads a COMPAS output file from h5 format.
 
         :param outdir: the directory where the output files are written
         :return: a COMPASOutput object
         """
-
         filename = os.path.join(outdir, 'COMPAS_Output.h5')
-        with h5py.File(filename, "r") as ff:
-            data = recursively_load_dict_contents_from_group(ff, '/')
+        data = parse_h5_file(filename)
         run_details = data['Run_Details']
         for k in data.keys():
             data[k] = pd.DataFrame(data[k])
@@ -89,8 +103,25 @@ class CompasOutput:
             rep.append(att_rep)
         return "\n".join(rep)
 
+    def _repr_html_(self):
+        dfs = {k:v for k, v in self.__dict__.items() if isinstance(v, pd.DataFrame)}
+        dfs['Run_Details'] = pd.DataFrame(self.Run_Details, index=[0]).T
+        dfs['Run_Details'].columns = ['Value']
+        dfs['Run_Details'].index.name = 'Setting'
 
-def load_compas_detailed_output(filename):
-    with h5py.File(filename, "r") as ff:
-        data = recursively_load_dict_contents_from_group(ff, '/')
-    return pd.DataFrame(data)
+        elemnts = []
+        for k, v in self.__dict__.items():
+            if k in dfs.keys():
+                v  = dfs[k]._repr_html_()
+
+            elemnts.append(element_template.format(
+                group_id=k + str(uuid.uuid4()),
+                group=k,
+                xr_data=v,
+            ))
+
+        formatted_html_template = html_template.format("".join(elemnts))
+        css_template = css  # pylint: disable=possibly-unused-variable
+        html_repr = f"{locals()['formatted_html_template']}{locals()['css_template']}"
+
+        return html_repr

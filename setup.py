@@ -18,6 +18,7 @@ CLASSIFIERS = [
 ]
 INSTALL_REQUIRES = [
     "tensorflow>=2.0.0",
+    "xarray"
 ]
 EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [

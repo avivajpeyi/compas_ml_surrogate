@@ -1,9 +1,22 @@
+"""Module to load data from HDF5 files"""
 import h5py
 import numpy as np
-import datetime
-import inspect
 from typing import Any, Dict
+import inspect
 import pandas as pd
+
+def parse_h5_file(file_path: str) -> Dict[str, Any]:
+    """
+    Parse an HDF5 file and return a dictionary containing the contents
+
+    :param file_path: str
+        Path to the HDF5 file
+
+    :return: dict
+        Dictionary containing the contents of the HDF5 file
+    """
+    with h5py.File(file_path, "r") as h5_file:
+        return recursively_load_dict_contents_from_group(h5_file, "/")
 
 
 def recursively_load_dict_contents_from_group(h5_file: h5py.File, path: str) -> Dict[str, Any]:
@@ -26,26 +39,7 @@ def recursively_load_dict_contents_from_group(h5_file: h5py.File, path: str) -> 
     return output
 
 
-def recursively_save_dict_contents_to_group(h5_file: h5py.File, path: str, dic: Dict[str, Any]) -> None:
-    """
-    Recursively save a dictionary to a HDF5 group
-
-    :param h5_file: h5py.File
-        Open HDF5 file
-    :param path: str
-        Path inside the HDF5 file
-    :param dic: dict
-        The dictionary containing the data
-    """
-    for key, item in dic.items():
-        item = encode_for_hdf5(key, item)
-        if isinstance(item, dict):
-            recursively_save_dict_contents_to_group(h5_file, path + key + "/", item)
-        else:
-            h5_file[path + key] = item
-
-
-def decode_from_hdf5(item) -> Any:
+def decode_from_hdf5(item: Any) -> Any:
     """
     Decode an item from HDF5 format to python type.
 
@@ -75,6 +69,26 @@ def decode_from_hdf5(item) -> Any:
     else:
         output = item
     return output
+
+def recursively_save_dict_contents_to_group(h5_file: h5py.File, path: str, dic: Dict[str, Any]) -> None:
+    """
+    Recursively save a dictionary to a HDF5 group
+
+    :param h5_file: h5py.File
+        Open HDF5 file
+    :param path: str
+        Path inside the HDF5 file
+    :param dic: dict
+        The dictionary containing the data
+    """
+    for key, item in dic.items():
+        item = encode_for_hdf5(key, item)
+        if isinstance(item, dict):
+            recursively_save_dict_contents_to_group(h5_file, path + key + "/", item)
+        else:
+            h5_file[path + key] = item
+
+
 
 
 def encode_for_hdf5(key: str, item: Any) -> Any:
