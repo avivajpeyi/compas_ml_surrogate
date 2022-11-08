@@ -1,8 +1,9 @@
 import os
 import pandas as pd
 from .h5_parser import parse_h5_file
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Tuple
 import uuid
+import numpy as np
 
 from .html_templates import html_template, element_template, css
 
@@ -125,3 +126,24 @@ class CompasOutput:
         html_repr = f"{locals()['formatted_html_template']}{locals()['css_template']}"
 
         return html_repr
+
+
+    @property
+    def initial_z(self)->np.ndarray:
+        """
+        Returns the initial metallicity of the binary population
+        """
+        return self.BSE_System_Parameters['Metallicity@ZAMS(1)'].unique()
+    def get_mass_evolved_per_z(self)->Tuple[np.ndarray, np.ndarray]:
+        """
+        Returns the mass evolved per metallicity and the metallicity bins
+        :return: mass evolved per metallicity, metallicity bins
+        """
+        all_sys = self.BSE_System_Parameters
+        all_metals = all_sys['Metallicity@ZAMS(1)']
+        m1s, m2s = all_sys['Mass@ZAMS(1)'], all_sys['Mass@ZAMS(2)']
+        total = []
+        for Z in self.initial_z:
+            mask = all_metals == Z
+            total.append(np.sum(m1s[mask]) + np.sum(m2s[mask]))
+        return np.array(total), self.initial_z

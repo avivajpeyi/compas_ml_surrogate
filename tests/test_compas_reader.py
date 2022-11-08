@@ -1,5 +1,8 @@
 import unittest
 import os
+
+import numpy as np
+
 from compas_surrogate.compas_output_parser.compas_output import CompasOutput
 
 
@@ -24,3 +27,8 @@ class TestCompasOutputReader(unittest.TestCase):
         html = compas_output._repr_html_()
         self.assertIsInstance(html, str)
 
+    def test_get_total_mass_per_z(self):
+        compas_output = CompasOutput.from_h5(self.res_dir)
+        total_mass_per_z, zs = compas_output.get_mass_evolved_per_z()
+        self.assertIsInstance(total_mass_per_z, np.ndarray)
+        self.assertCountEqual(zs, total_mass_per_z)
