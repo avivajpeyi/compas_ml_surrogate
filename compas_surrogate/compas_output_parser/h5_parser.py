@@ -1,9 +1,11 @@
 """Module to load data from HDF5 files"""
+import inspect
+from typing import Any, Dict
+
 import h5py
 import numpy as np
-from typing import Any, Dict
-import inspect
 import pandas as pd
+
 
 def parse_h5_file(file_path: str) -> Dict[str, Any]:
     """
@@ -19,7 +21,9 @@ def parse_h5_file(file_path: str) -> Dict[str, Any]:
         return recursively_load_dict_contents_from_group(h5_file, "/")
 
 
-def recursively_load_dict_contents_from_group(h5_file: h5py.File, path: str) -> Dict[str, Any]:
+def recursively_load_dict_contents_from_group(
+    h5_file: h5py.File, path: str
+) -> Dict[str, Any]:
     """
     Recursively load a HDF5 file into a dictionary
 
@@ -70,7 +74,10 @@ def decode_from_hdf5(item: Any) -> Any:
         output = item
     return output
 
-def recursively_save_dict_contents_to_group(h5_file: h5py.File, path: str, dic: Dict[str, Any]) -> None:
+
+def recursively_save_dict_contents_to_group(
+    h5_file: h5py.File, path: str, dic: Dict[str, Any]
+) -> None:
     """
     Recursively save a dictionary to a HDF5 group
 
@@ -84,11 +91,11 @@ def recursively_save_dict_contents_to_group(h5_file: h5py.File, path: str, dic: 
     for key, item in dic.items():
         item = encode_for_hdf5(key, item)
         if isinstance(item, dict):
-            recursively_save_dict_contents_to_group(h5_file, path + key + "/", item)
+            recursively_save_dict_contents_to_group(
+                h5_file, path + key + "/", item
+            )
         else:
             h5_file[path + key] = item
-
-
 
 
 def encode_for_hdf5(key: str, item: Any) -> Any:
@@ -127,7 +134,7 @@ def encode_for_hdf5(key: str, item: Any) -> Any:
         elif isinstance(item[0], (int, float, complex)):
             output = np.array(item)
         else:
-            raise ValueError(f'Cannot save {key}: {type(item)} type')
+            raise ValueError(f"Cannot save {key}: {type(item)} type")
     elif isinstance(item, pd.DataFrame):
         output = item.to_dict(orient="list")
     elif inspect.isfunction(item) or inspect.isclass(item):
@@ -141,5 +148,5 @@ def encode_for_hdf5(key: str, item: Any) -> Any:
     elif isinstance(item, datetime.timedelta):
         output = item.total_seconds()
     else:
-        raise ValueError(f'Cannot save {key}: {type(item)} type')
+        raise ValueError(f"Cannot save {key}: {type(item)} type")
     return output

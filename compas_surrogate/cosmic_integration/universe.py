@@ -1,17 +1,27 @@
-from ..compas_output_parser.compas_output import CompasOutput
 from typing import List
-from .get_total_mass_evolved_per_z import get_total_mass_evolved_per_z
+
 import numpy as np
+
+from ..compas_output_parser.compas_output import CompasOutput
+from .get_total_mass_evolved_per_z import get_total_mass_evolved_per_z
 
 
 class Universe:
-    def __init__(self, compas_output_path: str, m_range: List[float], binary_fraction: float):
+    def __init__(
+        self,
+        compas_output_path: str,
+        m_range: List[float],
+        binary_fraction: float,
+    ):
         self.path = compas_output_path
         self.compas_output = CompasOutput.from_h5(self.path)
         self.m_range = m_range
         self.binary_fraction = binary_fraction
 
-        (self.metallicity_grid, self.mass_evolved_per_z) = self._get_metallicity_grid()
+        (
+            self.metallicity_grid,
+            self.mass_evolved_per_z,
+        ) = self._get_metallicity_grid()
 
         pass
 
@@ -31,7 +41,10 @@ class Universe:
         # This does not change when we change types and other masks this is
         # general to the entire simulation so calculate once
 
-        compas_mass_evolved_per_z, compas_z_grid =  self.compas_output.get_mass_evolved_per_z()
+        (
+            compas_mass_evolved_per_z,
+            compas_z_grid,
+        ) = self.compas_output.get_mass_evolved_per_z()
         _, total_mass_evolved_per_z = get_total_mass_evolved_per_z(
             compas_mass_evolved_per_z=compas_mass_evolved_per_z,
             Mlower=self.Mlower,

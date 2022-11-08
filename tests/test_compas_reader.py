@@ -1,5 +1,5 @@
-import unittest
 import os
+import unittest
 
 import numpy as np
 
@@ -7,10 +7,10 @@ from compas_surrogate.compas_output_parser.compas_output import CompasOutput
 
 
 class TestCompasOutputReader(unittest.TestCase):
-
     def setUp(self) -> None:
         self.res_dir = os.path.join(
-            os.path.dirname(__file__), "test_data", "COMPAS_Output")
+            os.path.dirname(__file__), "test_data", "COMPAS_Output"
+        )
 
     def test_compas_output(self):
         """Test the COMPAS output class can load from h5 and load binary data from BSE_System_Parameters"""
@@ -19,8 +19,10 @@ class TestCompasOutputReader(unittest.TestCase):
         self.assertEqual(len(compas_output.BSE_System_Parameters), 5)
         binary_0 = compas_output[0]
         self.assertEqual(binary_0, compas_output.get_binary(index=0))
-        binary_0_seed = binary_0['SEED']
-        self.assertEqual(binary_0, compas_output.get_binary(seed=binary_0_seed))
+        binary_0_seed = binary_0["SEED"]
+        self.assertEqual(
+            binary_0, compas_output.get_binary(seed=binary_0_seed)
+        )
 
     def test_html_repr(self):
         compas_output = CompasOutput.from_h5(self.res_dir)

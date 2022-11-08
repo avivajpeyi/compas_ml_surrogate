@@ -1,22 +1,23 @@
 import os
-import pandas as pd
-from .h5_parser import parse_h5_file
-from typing import Optional, Dict, List, Tuple
 import uuid
-import numpy as np
+from typing import Dict, List, Optional, Tuple
 
-from .html_templates import html_template, element_template, css
+import numpy as np
+import pandas as pd
+
+from .h5_parser import parse_h5_file
+from .html_templates import css, element_template, html_template
 
 
 class CompasOutput:
     def __init__(
-            self,
-            outdir: str,
-            Run_Details: Dict[str, List],
-            BSE_System_Parameters: pd.DataFrame,
-            BSE_Supernovae: Optional[pd.DataFrame] = None,
-            BSE_Common_Envelopes: Optional[pd.DataFrame] = None,
-            BSE_RLOF: Optional[pd.DataFrame] = None,
+        self,
+        outdir: str,
+        Run_Details: Dict[str, List],
+        BSE_System_Parameters: pd.DataFrame,
+        BSE_Supernovae: Optional[pd.DataFrame] = None,
+        BSE_Common_Envelopes: Optional[pd.DataFrame] = None,
+        BSE_RLOF: Optional[pd.DataFrame] = None,
     ):
         """
 
@@ -40,8 +41,10 @@ class CompasOutput:
         self.BSE_System_Parameters = BSE_System_Parameters
         self.BSE_Common_Envelopes = BSE_Common_Envelopes
         self.BSE_RLOF = BSE_RLOF
-        self.number_of_systems = self.Run_Details['number-of-systems']
-        self.detailed_output_exists = True if self.Run_Details["detailed-output"] == 1 else False
+        self.number_of_systems = self.Run_Details["number-of-systems"]
+        self.detailed_output_exists = (
+            True if self.Run_Details["detailed-output"] == 1 else False
+        )
 
     def __getitem__(self, item):
         return self.get_binary(index=item)
@@ -59,18 +62,22 @@ class CompasOutput:
             index = self.BSE_System_Parameters[all_seeds == seed].index[0]
         data = dict(index=index, SEED=seed)
         if self.detailed_output_exists:
-            det_fn = os.path.join(self.outdir, "Detailed_Output", f"BSE_Detailed_Output_{index}.h5")
+            det_fn = os.path.join(
+                self.outdir,
+                "Detailed_Output",
+                f"BSE_Detailed_Output_{index}.h5",
+            )
             data["detailed_output"] = pd.DataFrame(parse_h5_file(det_fn))
         for key in self.__dict__:
             val = self.__dict__[key]
             if isinstance(val, pd.DataFrame):
-                val = val[val['SEED'] == seed]
+                val = val[val["SEED"] == seed]
                 if len(val) == 0:
                     data[key] = None
                 elif len(val) > 1:
                     raise ValueError("Data for two binaries with same key")
                 else:
-                    data[key] = val.to_dict('records')[0]
+                    data[key] = val.to_dict("records")[0]
 
         return data
 
@@ -82,13 +89,13 @@ class CompasOutput:
         :param outdir: the directory where the output files are written
         :return: a COMPASOutput object
         """
-        filename = os.path.join(outdir, 'COMPAS_Output.h5')
+        filename = os.path.join(outdir, "COMPAS_Output.h5")
         data = parse_h5_file(filename)
-        run_details = data['Run_Details']
+        run_details = data["Run_Details"]
         for k in data.keys():
             data[k] = pd.DataFrame(data[k])
-        data['Run_Details'] = pd.DataFrame(run_details).to_dict('records')[0]
-        data['outdir'] = outdir
+        data["Run_Details"] = pd.DataFrame(run_details).to_dict("records")[0]
+        data["outdir"] = outdir
         return cls(**data)
 
     def __repr__(self):
@@ -105,43 +112,51 @@ class CompasOutput:
         return "\n".join(rep)
 
     def _repr_html_(self):
-        dfs = {k:v for k, v in self.__dict__.items() if isinstance(v, pd.DataFrame)}
-        dfs['Run_Details'] = pd.DataFrame(self.Run_Details, index=[0]).T
-        dfs['Run_Details'].columns = ['Value']
-        dfs['Run_Details'].index.name = 'Setting'
+        dfs = {
+            k: v
+            for k, v in self.__dict__.items()
+            if isinstance(v, pd.DataFrame)
+        }
+        dfs["Run_Details"] = pd.DataFrame(self.Run_Details, index=[0]).T
+        dfs["Run_Details"].columns = ["Value"]
+        dfs["Run_Details"].index.name = "Setting"
 
         elemnts = []
         for k, v in self.__dict__.items():
             if k in dfs.keys():
-                v  = dfs[k]._repr_html_()
+                v = dfs[k]._repr_html_()
 
-            elemnts.append(element_template.format(
-                group_id=k + str(uuid.uuid4()),
-                group=k,
-                xr_data=v,
-            ))
+            elemnts.append(
+                element_template.format(
+                    group_id=k + str(uuid.uuid4()),
+                    group=k,
+                    xr_data=v,
+                )
+            )
 
         formatted_html_template = html_template.format("".join(elemnts))
         css_template = css  # pylint: disable=possibly-unused-variable
-        html_repr = f"{locals()['formatted_html_template']}{locals()['css_template']}"
+        html_repr = (
+            f"{locals()['formatted_html_template']}{locals()['css_template']}"
+        )
 
         return html_repr
 
-
     @property
-    def initial_z(self)->np.ndarray:
+    def initial_z(self) -> np.ndarray:
         """
         Returns the initial metallicity of the binary population
         """
-        return self.BSE_System_Parameters['Metallicity@ZAMS(1)'].unique()
-    def get_mass_evolved_per_z(self)->Tuple[np.ndarray, np.ndarray]:
+        return self.BSE_System_Parameters["Metallicity@ZAMS(1)"].unique()
+
+    def get_mass_evolved_per_z(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns the mass evolved per metallicity and the metallicity bins
         :return: mass evolved per metallicity, metallicity bins
         """
         all_sys = self.BSE_System_Parameters
-        all_metals = all_sys['Metallicity@ZAMS(1)']
-        m1s, m2s = all_sys['Mass@ZAMS(1)'], all_sys['Mass@ZAMS(2)']
+        all_metals = all_sys["Metallicity@ZAMS(1)"]
+        m1s, m2s = all_sys["Mass@ZAMS(1)"], all_sys["Mass@ZAMS(2)"]
         total = []
         for Z in self.initial_z:
             mask = all_metals == Z

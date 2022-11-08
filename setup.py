@@ -16,10 +16,7 @@ CLASSIFIERS = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
-INSTALL_REQUIRES = [
-    "tensorflow>=2.0.0",
-    "xarray"
-]
+INSTALL_REQUIRES = ["tensorflow>=2.0.0", "xarray"]
 EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [
     "pre-commit",
@@ -49,7 +46,7 @@ if __name__ == "__main__":
     setup(
         name=NAME,
         use_scm_version={
-            "write_to": os.path.join( NAME, f"{NAME}_version.py"),
+            "write_to": os.path.join(NAME, f"{NAME}_version.py"),
             "write_to_template": '__version__ = "{version}"\n',
         },
         author=find_meta("author"),
@@ -68,7 +65,5 @@ if __name__ == "__main__":
         extras_require=EXTRA_REQUIRE,
         classifiers=CLASSIFIERS,
         zip_safe=True,
-        entry_points={
-            "console_scripts": []
-        },
+        entry_points={"console_scripts": []},
     )
