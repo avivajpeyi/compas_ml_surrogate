@@ -31,4 +31,4 @@ class TestCompasOutputReader(unittest.TestCase):
         compas_output = CompasOutput.from_h5(self.res_dir)
         total_mass_per_z, zs = compas_output.get_mass_evolved_per_z()
         self.assertIsInstance(total_mass_per_z, np.ndarray)
-        self.assertCountEqual(zs, total_mass_per_z)
+        self.assertEqual(len(zs), len(total_mass_per_z))

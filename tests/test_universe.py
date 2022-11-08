@@ -19,3 +19,4 @@ class TestUniverse(unittest.TestCase):
         uni_total_mass_at_z = uni.mass_evolved_per_z[0]
         compas_total_mass_at_z = self.co.get_mass_evolved_per_z()[0][0]
         self.assertGreater(uni_total_mass_at_z, compas_total_mass_at_z)
+
