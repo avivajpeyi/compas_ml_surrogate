@@ -7,6 +7,7 @@ import pandas as pd
 
 from .h5_parser import parse_h5_file
 from .html_templates import css, element_template, html_template
+from .types import DCOType, StellarType
 
 
 class CompasOutput:
@@ -18,6 +19,7 @@ class CompasOutput:
         BSE_Supernovae: Optional[pd.DataFrame] = None,
         BSE_Common_Envelopes: Optional[pd.DataFrame] = None,
         BSE_RLOF: Optional[pd.DataFrame] = None,
+        BSE_Double_Compact_Objects: Optional[pd.DataFrame] = None,
     ):
         """
 
@@ -41,6 +43,7 @@ class CompasOutput:
         self.BSE_System_Parameters = BSE_System_Parameters
         self.BSE_Common_Envelopes = BSE_Common_Envelopes
         self.BSE_RLOF = BSE_RLOF
+        self.BSE_Double_Compact_Objects = BSE_Double_Compact_Objects
         self.number_of_systems = self.Run_Details["number-of-systems"]
         self.detailed_output_exists = (
             True if self.Run_Details["detailed-output"] == 1 else False
@@ -80,6 +83,16 @@ class CompasOutput:
                     data[key] = val.to_dict("records")[0]
 
         return data
+
+    @staticmethod
+    def stellar_type(df, key) -> np.ndarray:
+        """Stellar types in dataframe
+
+        :return np.ndarray[[StellarType, StellarType]]: each row is a binary, each column is a star
+        """
+        types = np.array([df[f"{key}(1)"].values, df[f"{key}(2)"].values]).T
+        # convert to StellarType
+        return np.vectorize(StellarType)(types)
 
     @classmethod
     def from_h5(cls, outdir):
@@ -162,3 +175,19 @@ class CompasOutput:
             mask = all_metals == Z
             total.append(np.sum(m1s[mask]) + np.sum(m2s[mask]))
         return np.array(total), self.initial_z
+
+    def get_mask(
+        self,
+        type="BBH",
+        withinHubbleTime=True,
+        pessimistic=True,
+        noRLOFafterCEE=True,
+    ) -> np.ndarray:
+        type = DCOType[type]
+        dco_stellar_types = self.stellar_type(
+            self.BSE_Double_Compact_Objects, "Stellar_Type"
+        )
+        hubble_flag = self.BSE_Double_Compact_Objects["Merges_Hubble_Time"]
+        dco_seeds = self.BSE_Double_Compact_Objects["SEED"]
+
+        return self.BSE_System_Parameters["SEED"] == dco_seeds

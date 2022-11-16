@@ -11,26 +11,27 @@ class TestCompasOutputReader(unittest.TestCase):
         self.res_dir = os.path.join(
             os.path.dirname(__file__), "test_data", "COMPAS_Output"
         )
+        self.co = CompasOutput.from_h5(self.res_dir)
+        self.num_sys = 500
 
-    def test_compas_output(self):
-        """Test the COMPAS output class can load from h5 and load binary data from BSE_System_Parameters"""
-        compas_output = CompasOutput.from_h5(self.res_dir)
-        self.assertEqual(compas_output.number_of_systems, 5)
-        self.assertEqual(len(compas_output.BSE_System_Parameters), 5)
-        binary_0 = compas_output[0]
-        self.assertEqual(binary_0, compas_output.get_binary(index=0))
+    def test_compas_output_basics(self):
+        self.assertEqual(self.co.number_of_systems, self.num_sys)
+        self.assertEqual(len(self.co.BSE_System_Parameters), self.num_sys)
+        binary_0 = self.co[0]
+        self.assertEqual(binary_0, self.co.get_binary(index=0))
         binary_0_seed = binary_0["SEED"]
-        self.assertEqual(
-            binary_0, compas_output.get_binary(seed=binary_0_seed)
-        )
+        self.assertEqual(binary_0, self.co.get_binary(seed=binary_0_seed))
 
     def test_html_repr(self):
-        compas_output = CompasOutput.from_h5(self.res_dir)
-        html = compas_output._repr_html_()
+        html = self.co._repr_html_()
         self.assertIsInstance(html, str)
 
     def test_get_total_mass_per_z(self):
-        compas_output = CompasOutput.from_h5(self.res_dir)
-        total_mass_per_z, zs = compas_output.get_mass_evolved_per_z()
+        total_mass_per_z, zs = self.co.get_mass_evolved_per_z()
         self.assertIsInstance(total_mass_per_z, np.ndarray)
         self.assertEqual(len(zs), len(total_mass_per_z))
+
+    def test_make_mask(self):
+        mask = self.co.make_mask()
+        self.assertIsInstance(mask, np.ndarray)
+        self.assertEqual(mask.shape, (self.num_sys,))
