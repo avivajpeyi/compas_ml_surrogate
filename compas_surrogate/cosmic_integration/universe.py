@@ -3,6 +3,7 @@ import time
 from argparse import Namespace
 from functools import cached_property
 
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units
 
@@ -94,19 +95,82 @@ class Universe:
         )
         end_CI = time.time()
         print("Time taken for CI: ", end_CI - start_CI)
-        self.dco_chirp_masses = COMPAS.mChirp
 
-    def plot_detection_rate_matrix(self):
+        sorted_idx = np.argsort(COMPAS.mChirp)
+        self.dco_chirp_masses = COMPAS.mChirp[sorted_idx]
+        self.detection_rate = self.detection_rate[sorted_idx, :]
+
+    def plot_detection_rate_matrix(self, num_chirp_mass_bins=None):
         """Plot the detection rate matrix"""
         # get midpoints of redshift bins
         z = self.redshifts[self.redshifts < self.max_detectable_redshift]
         mc = self.dco_chirp_masses
         detections = self.detection_rate
+
         if (len(mc), len(z)) != detections.shape:
             raise ValueError(
                 f"Shape of detection rate matrix ({detections.shape}) "
                 f"does not match redshift and chirp mass bins ({len(mc)}, {len(z)})"
             )
+
+        # if num_chirp_mass_bins is not None:
+        #     # get midpoints of chirp mass bins
+        #     mc_bins = np.linspace(mc.min(), mc.max(), num_chirp_mass_bins + 1)
+        #     mc = 0.5 * (mc_bins[1:] + mc_bins[:-1])
+        #     # sum over chirp mass bins
+        #     detections = np.sum(detections.reshape(len(mc_bins) - 1, -1), axis=0)
+        #     detections = detections.reshape(1, -1)
+        #
+        #
+        # num_bins = 40
+        # bins = np.linspace(low_mc, high_mc, num_bins)
+        # mc_bins = np.digitize(mc[sort_idx], bins)
+        # binned_rates = np.zeros((num_bins, len(z)))
+        # sorted_dr = detection_rate[sort_idx, :]
+        #
+        # for bii in range(1, num_bins + 1):
+        #     mask = mc_bins[mc_bins == bii]
+        #     binned_rates[bii - 1] = np.sum(sorted_dr[mask], axis=0)
+
+        plt.figure(figsize=(5, 5))
+
+        low_mc, high_mc = np.min(mc), np.max(mc)
+        low_z, high_z = np.min(z), np.max(z)
+        # norm = mpl.colors.Normalize(vmin=np.exp(-100), vmax=np.exp(-12))
+        plt.imshow(
+            self.detection_rate,
+            cmap=plt.cm.hot,
+            norm="linear",
+            vmin=1e-40,
+            vmax=1e-5,
+            aspect="auto",
+            interpolation="gaussian",
+            origin="lower",
+            extent=[low_z, high_z, low_mc, high_mc],
+        )
+        plt.xlabel("Redshift")
+        plt.ylabel("Chirp mass")
+
+    def plot_merger_rate(self):
+        """Plot the merger rate"""
+        plt.figure()
+        plt.plot(self.redshifts, self.merger_rate)
+        plt.xlabel("Redshift")
+        plt.ylabel("Merger rate")
+
+    def plot_binned_merger_rate(self, bin_width=0.1):
+        """Plot the binned merger rate"""
+        plt.figure()
+        z = self.redshifts
+        m = self.merger_rate
+        z_bins = np.arange(0, 10, bin_width)
+        m_bins = np.zeros_like(z_bins)
+        for i, z_bin in enumerate(z_bins):
+            m_bins[i] = np.sum(m[(z >= z_bin) & (z < z_bin + bin_width)])
+        plt.plot(z_bins, m_bins)
+        plt.xlabel("Redshift")
+        plt.ylabel("Merger rate")
+        plt.yscale("log")
 
     def save(self, fname):
         """Save the Universe object to a npz file"""
