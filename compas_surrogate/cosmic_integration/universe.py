@@ -1,4 +1,5 @@
 """File to run CosmicIntegrator"""
+import logging
 import time
 from argparse import Namespace
 from functools import cached_property
@@ -10,6 +11,8 @@ from astropy import units
 from compas_surrogate.cosmic_integration.CosmicIntegration import (
     find_detection_rate,
 )
+
+logger = logging.getLogger()
 
 
 class Universe:
@@ -99,6 +102,8 @@ class Universe:
         sorted_idx = np.argsort(COMPAS.mChirp)
         self.dco_chirp_masses = COMPAS.mChirp[sorted_idx]
         self.detection_rate = self.detection_rate[sorted_idx, :]
+        self.merger_rate = self.merger_rate[sorted_idx, :]
+        self.formation_rate = self.formation_rate[sorted_idx, :]
 
     def plot_detection_rate_matrix(self, num_chirp_mass_bins=None):
         """Plot the detection rate matrix"""
@@ -171,6 +176,27 @@ class Universe:
         plt.xlabel("Redshift")
         plt.ylabel("Merger rate")
         plt.yscale("log")
+
+    def bin_data(self, data, num_bins: int):
+        mc, z = self.dco_chirp_masses, self.redshifts
+        bins = np.linspace(mc.min(), mc.max(), num_bins)
+        bin_mc_falls_in = np.digitize(mc, bins)
+        assert len(bin_mc_falls_in) == len(mc)
+        assert data.shape[0] == len(mc)
+        binned_data = np.zeros((num_bins - 1, data.shape[1]))
+        for bii in range(1, num_bins):
+            mask = bin_mc_falls_in == bii
+            logger.debug(
+                f"BIN {bii}[{bins[bii - 1]:.2f}, {bins[bii]:.2f}]: "
+                f"count {len(mc[mask])} {mc[mask].min(), mc[mask].max()}"
+            )
+            binned_data[bii - 1] = np.sum(data[mask, :], axis=0)
+
+        binned_mc = 0.5 * (bins[1:] + bins[:-1])
+
+        assert len(binned_mc) == binned_data.shape[0]
+
+        return binned_data, binned_mc, bins
 
     def save(self, fname):
         """Save the Universe object to a npz file"""
