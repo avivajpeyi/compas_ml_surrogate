@@ -9,7 +9,9 @@ from compas_surrogate.compas_output_parser.compas_output import CompasOutput
 class TestCompasOutputReader(unittest.TestCase):
     def setUp(self) -> None:
         self.res_dir = os.path.join(
-            os.path.dirname(__file__), "test_data", "COMPAS_Output"
+            os.path.dirname(__file__),
+            "test_data",
+            "COMPAS_Output/COMPAS_Output.h5",
         )
         self.co = CompasOutput.from_h5(self.res_dir)
         self.num_sys = 500

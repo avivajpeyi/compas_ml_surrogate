@@ -95,20 +95,23 @@ class CompasOutput:
         return np.vectorize(StellarType)(types)
 
     @classmethod
-    def from_h5(cls, outdir):
+    def from_h5(cls, h5path):
         """
         Loads a COMPAS output file from h5 format.
 
-        :param outdir: the directory where the output files are written
+        :param h5path: the directory where the output files are written
         :return: a COMPASOutput object
         """
-        filename = os.path.join(outdir, "COMPAS_Output.h5")
-        data = parse_h5_file(filename)
+        # check that the file extension is .h5:
+        if not h5path.endswith(".h5"):
+            raise ValueError("COMPAS output file must be in h5 format")
+
+        data = parse_h5_file(h5path)
         run_details = data["Run_Details"]
         for k in data.keys():
             data[k] = pd.DataFrame(data[k])
         data["Run_Details"] = pd.DataFrame(run_details).to_dict("records")[0]
-        data["outdir"] = outdir
+        data["outdir"] = h5path
         return cls(**data)
 
     def __repr__(self):

@@ -9,6 +9,9 @@ venv
 .mypy_cache
 *_version.py
 *.egg-info
+.temp
+*.png
+tests/out_test/
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
