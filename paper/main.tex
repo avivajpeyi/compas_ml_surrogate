@@ -1,0 +1,105 @@
+\documentclass[floatfix,ApJL,twocolumn]{aastex631}
+
+\input{avi_style}
+
+
+\shorttitle{SFR from CBC Mergers}
+
+
+\begin{document}
+
+\title{Using COMPAS to learn about the star formation rate from LIGO CBC mergers}
+
+\input{authors}
+
+
+
+
+
+\begin{abstract}
+We present BLAH
+\end{abstract}
+
+
+\keywords{%
+  methods: data analysis ---
+  methods: statistical ---
+  miscellaneous
+}
+
+
+\section{Introduction} \label{sec:intro}
+
+General  info on
+
+The remainder of the paper is organised as follows.
+Section~\ref{sec:method} outlines...
+Results are summarised in Section~\ref{sec:results}.
+The data products, and software to reproduce the results available online as supplementary materials (\projectUrl).
+Finally, we discuss caveats and provide concluding remarks in Section~\ref{sec:conclusion}.
+
+\section{Method} \label{sec:method}
+Details on the method
+
+\section{Results}\label{sec:results}
+Details on the results
+
+\section{Discussion and caveats}\label{sec:conclusion}
+Some concluding discussions
+
+\section{Data and software availability}\label{sec:data}
+Code data can be found: \projectGit
+
+
+
+%%%%%%%%%%%%%%%%%%%%
+
+
+
+\section*{Acknowledgments}{
+
+
+We gratefully acknowledge the Swinburne Supercomputing OzSTAR Facility for computational resources. All analyses (including test and failed analyses) performed for this study used $XX$K core hours on OzSTAR. This would have amounted to a carbon footprint of ${\sim XX{\text{t CO}_2}}$~\citep{greenhouse, energy_to_co2_converter}. Thankfully, as OzSTAR is powered by wind energy from Iberdrola Australia; the electricity for computations produces negligible carbon waste.
+
+
+A.V. is supported by the Australian Research Council (ARC) Centre of Excellence CE170100004.
+
+}
+
+\vspace{5mm}
+\facilities{\tess, \mast, Exoplanet Archive.}
+
+\software{
+\python~\citep{pythonForScientificComputing,pythonForScientists},
+\astropy~\citep{astropy},
+\arviz~\citep{arviz_2019},
+\exoplanet~\citep{Foreman-Mackey:2021:JOSS},
+\lightkurve~\citep{LightkurveCollaboration:2018:ascl},
+\starry~\citep{Luger:2019:AJ},
+\celerite~\citep{Foreman-Mackey:2017:ascl},
+\pymc~\citep{Salvatier:2016:ascl},
+\numpy~\citep{numpy},
+\scipy~\citep{SciPy},
+\pandas~\citep{pandas},
+\matplotlib~\citep{matplotlib},
+\corner~\citep{corner},
+\sphinx~\citep{sphinx_doc},
+\jupyter~\citep{jupyter},
+\jupyterbook~\citep{jupyter_book}.
+}
+
+
+% ADS bibliography link
+% https://ui.adsabs.harvard.edu/user/libraries/_DyLS4HbTY-eJIMBiFUdxw
+\bibliography{main}{}
+\bibliographystyle{aasjournal}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+
+\section{Some More dets}\label{apdx:dets}
+Some additional dets useful for the reader
+
+
+
+\end{document}

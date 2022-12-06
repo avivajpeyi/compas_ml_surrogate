@@ -48,6 +48,8 @@ class Universe:
     @classmethod
     def from_compas_h5(cls, compas_h5_path, SF=None):
         """Create a Universe object from a COMPAS h5 file (run cosmic integrator)"""
+        if SF:
+            assert len(SF) == 4, "SF must be a list of length 4"
         uni = cls(compas_h5_path, SF=SF)
         uni.run_cosmic_integrator()
         return uni
@@ -282,3 +284,30 @@ class Universe:
             dco_chirp_masses=self.dco_chirp_masses,
             SF=self.SF,
         )
+
+    def log_likelihood(self, data):
+        """Calculate the likelihood of the data given the Universe object"""
+
+        u = np.sum(self.detection_rate)
+
+        if u <= 0.0:
+            return -np.inf
+
+        nObs = np.sum(
+            data
+        )  # do this outside the function and pass it in if you're doing this many times in a loop
+
+        t1 = nObs * np.log(u) - u
+
+        det_shape = self.detection_rate.shape
+
+        p = detections / u
+        p += (
+            1.0 / float(det_shape.shape[0]) / float(det_shape.shape[1])
+        )  # to avoid p = 0.0
+        pSum = np.sum(p)
+        p /= pSum
+
+        t2 = np.sum(data * np.log(p))
+
+        return t1 + t2
