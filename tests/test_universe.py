@@ -28,9 +28,7 @@ class TestUniverse(unittest.TestCase):
         outfn = uni.save(outdir=self.outdir)
         new_uni = Universe.from_npz(outfn)
         # check that new_uni.dco_masses is the same as uni.dco_masses
-        self.assertTrue(
-            np.allclose(uni.dco_chirp_masses, new_uni.dco_chirp_masses)
-        )
+        self.assertTrue(np.allclose(uni.chirp_masses, new_uni.chirp_masses))
         uni.plot_detection_rate_matrix(
             fname=os.path.join(self.outdir, "detection_rate_matrix_orig.png")
         )

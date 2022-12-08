@@ -1,17 +1,12 @@
-"""File to run CosmicIntegrator"""
 import logging
 import os
 import time
-from argparse import Namespace
-from functools import cached_property
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 from astropy import units
-from skimage import io
+from matplotlib.gridspec import GridSpec
 
 from compas_surrogate.cosmic_integration.CosmicIntegration import (
     find_detection_rate,
@@ -19,60 +14,55 @@ from compas_surrogate.cosmic_integration.CosmicIntegration import (
 
 logger = logging.getLogger()
 
+MC_RANGE = [1, 40]
+Z_RANGE = [0, 0.8]
+O2_DURATION = 0.5  # in yrs
+
 
 class Universe:
     def __init__(
         self,
         compas_h5_path,
-        max_detectable_redshift=1,
-        detection_rate=None,
-        formation_rate=None,
-        merger_rate=None,
-        redshifts=None,
-        dco_chirp_masses=None,
-        SF=None,
+        detection_rate,
+        n_systems,
+        formation_rate,
+        merger_rate,
+        redshifts,
+        chirp_masses,
+        SF,
+        ci_runtime,
+        binned=False,
     ):
 
         self.compas_h5_path = compas_h5_path
-        self.max_detectable_redshift = max_detectable_redshift
         self.detection_rate = detection_rate
+        self.chirp_mass_rate = np.sum(detection_rate, axis=1)
+        self.redshift_rate = np.sum(detection_rate, axis=0)
+        self.n_systems = n_systems
         self.formation_rate = formation_rate
         self.merger_rate = merger_rate
         self.redshifts = redshifts
-        self.dco_chirp_masses = dco_chirp_masses
-
-        if SF is None:
-            SF = [0.01, 2.77, 2.90, 4.70]
+        self.chirp_masses = chirp_masses
+        self.binned = binned
+        self.ci_runtime = ci_runtime
         self.SF = SF
 
     @classmethod
-    def from_compas_h5(cls, compas_h5_path, SF=None):
+    def simulate(cls, compas_h5_path, SF=None):
         """Create a Universe object from a COMPAS h5 file (run cosmic integrator)"""
-        if SF:
-            assert len(SF) == 4, "SF must be a list of length 4"
-        uni = cls(compas_h5_path, SF=SF)
-        uni.run_cosmic_integrator()
-        return uni
+        if SF is None:
+            SF = [0.01, 2.77, 2.90, 4.70]
+        assert len(SF) == 4, "SF must be a list of length 4"
 
-    @classmethod
-    def from_npz(cls, fname):
-        """Create a Universe object from a npz file (dont run cosmic integrator)"""
-        data = dict(np.load(fname))
-        for key in data:
-            if data[key].dtype == "<U48":
-                data[key] = data[key].item()
-        return cls(**data)
-
-    def run_cosmic_integrator(self):
-        start_CI = time.time()
+        start_time = time.time()
         (
-            self.detection_rate,
-            self.formation_rate,
-            self.merger_rate,
-            self.redshifts,
+            detection_rate,
+            formation_rate,
+            merger_rate,
+            redshifts,
             COMPAS,
         ) = find_detection_rate(
-            path=self.compas_h5_path,
+            path=compas_h5_path,
             dco_type="BBH",
             merger_output_filename=None,
             weight_column=None,
@@ -80,7 +70,7 @@ class Universe:
             pessimistic_CEE=True,
             no_RLOF_after_CEE=True,
             max_redshift=10.0,
-            max_redshift_detection=self.max_detectable_redshift,
+            max_redshift_detection=max(Z_RANGE),
             redshift_step=0.001,
             z_first_SF=10,
             use_sampled_mass_ranges=True,
@@ -88,10 +78,10 @@ class Universe:
             m1_max=150 * units.Msun,
             m2_min=0.1 * units.Msun,
             fbin=0.7,
-            aSF=self.SF[0],
-            bSF=self.SF[1],
-            cSF=self.SF[2],
-            dSF=self.SF[3],
+            aSF=SF[0],
+            bSF=SF[1],
+            cSF=SF[2],
+            dSF=SF[3],
             mu0=0.035,
             muz=-0.23,
             sigma0=0.39,
@@ -109,111 +99,119 @@ class Universe:
             snr_max=1000.0,
             snr_step=0.1,
         )
-        end_CI = time.time()
-        print("Time taken for CI: ", end_CI - start_CI)
+        runtime = time.time() - start_time
 
         sorted_idx = np.argsort(COMPAS.mChirp)
-        self.dco_chirp_masses = COMPAS.mChirp[sorted_idx]
-        self.detection_rate = self.detection_rate[sorted_idx, :]
-        self.merger_rate = self.merger_rate[sorted_idx, :]
-        self.formation_rate = self.formation_rate[sorted_idx, :]
-
-    def plot_detection_rate_matrix(
-        self, num_chirp_mass_bins=None, fname="", outdir=".", interactive=False
-    ):
-        """Plot the detection rate matrix"""
-        # get midpoints of redshift bins
-        z = self.redshifts[self.redshifts < self.max_detectable_redshift]
-        mc = self.dco_chirp_masses
-        detections = self.detection_rate
-
-        if (len(mc), len(z)) != detections.shape:
+        chirp_masses = COMPAS.mChirp[sorted_idx]
+        redshift_mask = redshifts < max(Z_RANGE)
+        redshifts = redshifts[redshift_mask]
+        if (len(chirp_masses), len(redshifts)) != detection_rate.shape:
             raise ValueError(
-                f"Shape of detection rate matrix ({detections.shape}) "
-                f"does not match redshift and chirp mass bins ({len(mc)}, {len(z)})"
+                f"Shape of detection rate matrix ({detection_rate.shape}) "
+                f"does not match chirp mass + redshift bins ({(len(chirp_masses), len(redshifts))})"
             )
 
-        # if num_chirp_mass_bins is not None:
-        #     # get midpoints of chirp mass bins
-        #     mc_bins = np.linspace(mc.min(), mc.max(), num_chirp_mass_bins + 1)
-        #     mc = 0.5 * (mc_bins[1:] + mc_bins[:-1])
-        #     # sum over chirp mass bins
-        #     detections = np.sum(detections.reshape(len(mc_bins) - 1, -1), axis=0)
-        #     detections = detections.reshape(1, -1)
-        #
-        #
-        # num_bins = 40
-        # bins = np.linspace(low_mc, high_mc, num_bins)
-        # mc_bins = np.digitize(mc[sort_idx], bins)
-        # binned_rates = np.zeros((num_bins, len(z)))
-        # sorted_dr = detection_rate[sort_idx, :]
-        #
-        # for bii in range(1, num_bins + 1):
-        #     mask = mc_bins[mc_bins == bii]
-        #     binned_rates[bii - 1] = np.sum(sorted_dr[mask], axis=0)
+        merger_rate = merger_rate[:, redshift_mask]
+        formation_rate = formation_rate[:, redshift_mask]
 
-        title_txt = f"Detection Rate Matrix ({len(mc)} systems)"
+        uni = cls(
+            compas_h5_path,
+            chirp_masses=chirp_masses,
+            n_systems=len(chirp_masses),
+            detection_rate=detection_rate[sorted_idx, :],
+            merger_rate=merger_rate[sorted_idx, :],
+            formation_rate=formation_rate[sorted_idx, :],
+            redshifts=redshifts,
+            ci_runtime=runtime,
+            SF=SF,
+        )
+
+        print(f"Time taken for CI: {runtime:.2f} s")
+        print(
+            f"{uni.n_systems} simulated systems in {uni.detection_rate.shape} bins"
+        )
+        return uni
+
+    def n_detections(self, duration=O2_DURATION):
+        """Calculate the number of detections in a given duration"""
+        return int(np.sum(self.detection_rate) * duration)
+
+    @classmethod
+    def from_npz(cls, fname):
+        """Create a Universe object from a npz file (dont run cosmic integrator)"""
+        data = dict(np.load(fname))
+        for key in data:
+            if data[key].dtype == "<U48":
+                data[key] = data[key].item()
+        return cls(**data)
+
+    def plot_detection_rate_matrix(
+        self,
+        fname="",
+        outdir=".",
+    ):
+        z, mc, rate2d = self.redshifts, self.chirp_masses, self.detection_rate
+
+        title_txt = f"Detection Rate Matrix ({self.n_systems} systems)"
         title_txt += f"\nSF: {', '.join(np.array(self.SF).astype(str))}"
+        if self.binned:
+            title_txt = "Binned " + title_txt
 
         low_mc, high_mc = np.min(mc), np.max(mc)
         low_z, high_z = np.min(z), np.max(z)
-        # norm = mpl.colors.Normalize(vmin=np.exp(-100), vmax=np.exp(-12))
 
         fig = plt.figure(figsize=(5, 5))
-        plt.imshow(
-            self.detection_rate,
+        gs = GridSpec(4, 4)
+
+        ax_2d = fig.add_subplot(gs[1:4, 0:3])
+        ax_top = fig.add_subplot(gs[0, 0:3])
+        ax_right = fig.add_subplot(gs[1:4, 3])
+
+        ax_2d.imshow(
+            rate2d,
             cmap=plt.cm.hot,
             norm="linear",
-            vmin=1e-40,
-            vmax=1e-5,
+            vmin=np.quantile(rate2d, 0.001),
+            vmax=np.quantile(rate2d, 0.99),
             aspect="auto",
             interpolation="gaussian",
             origin="lower",
             extent=[low_z, high_z, low_mc, high_mc],
         )
-        if interactive:
-            axis = plt.gca()
-            axis.xaxis.set_visible(False)
-            axis.yaxis.set_visible(False)
-            for spine in ["top", "right", "left", "bottom"]:
-                axis.spines[spine].set_visible(False)
-        else:
-            plt.suptitle(title_txt)
-            plt.xlabel("Redshift")
-            plt.ylabel("Chirp mass")
-            plt.colorbar(label="Detection rate")
-        plt.tight_layout()
 
-        if interactive:
-            outdir = os.path.join(outdir, ".temp")
-            os.makedirs(outdir, exist_ok=True)
+        fig.suptitle(title_txt)
+        ax_2d.set_xlabel("Redshift")
+        ax_2d.set_ylabel("Chirp mass")
+        ax_2d.set_facecolor("black")
+        annote = f"Grid: {rate2d.shape}\nN det: {self.n_detections(1)}/yr"
+        ax_2d.annotate(
+            annote,
+            xy=(1, 0),
+            xycoords="axes fraction",
+            xytext=(-5, 5),
+            textcoords="offset points",
+            ha="right",
+            va="bottom",
+            color="white",
+        )
+        ax_right.plot(self.chirp_mass_rate, mc, color="red")
+        ax_top.plot(z, self.redshift_rate, color="red")
+        ax_right.axis("off")
+        ax_top.axis("off")
+
+        ax_right.set_ylim(*MC_RANGE)
+        ax_2d.set_ylim(*MC_RANGE)
+        ax_top.set_xlim(*Z_RANGE)
+        ax_2d.set_xlim(*Z_RANGE)
+
+        plt.tight_layout()
 
         if not outdir == ".":
             fname = os.path.join(outdir, f"{self.label}_det_matrix.png")
 
         if not fname == "":
-            if not interactive:
-                plt.savefig(fname)
-            else:
-                plt.savefig(fname, bbox_inches="tight", pad_inches=0)
+            plt.savefig(fname, bbox_inches="tight", pad_inches=0)
 
-        if interactive:
-            img_data = io.imread(fname)
-            fig = px.imshow(
-                img_data,
-                labels=dict(
-                    x="Redshift", y="Chirp mass", color="Detection rate"
-                ),
-                title=title_txt,
-                # aspect="auto",
-                color_continuous_scale="hot",
-            )
-            # fig.update_xaxes(range=[low_z, high_z])
-            # fig.update_yaxes(range=[low_mc, high_mc])
-            fig.update_layout(coloraxis_colorbar=dict(title="Detection rate"))
-            fig.update_xaxes(showticklabels=False).update_yaxes(
-                showticklabels=False
-            )
         return fig
 
     def plot_merger_rate(self):
@@ -237,26 +235,39 @@ class Universe:
         plt.ylabel("Merger rate")
         plt.yscale("log")
 
-    def bin_data(self, data, num_bins: int):
-        mc, z = self.dco_chirp_masses, self.redshifts
-        bins = np.linspace(mc.min(), mc.max(), num_bins)
-        bin_mc_falls_in = np.digitize(mc, bins)
-        assert len(bin_mc_falls_in) == len(mc)
-        assert data.shape[0] == len(mc)
-        binned_data = np.zeros((num_bins - 1, data.shape[1]))
-        for bii in range(1, num_bins):
-            mask = bin_mc_falls_in == bii
-            logger.debug(
-                f"BIN {bii}[{bins[bii - 1]:.2f}, {bins[bii]:.2f}]: "
-                f"count {len(mc[mask])} {mc[mask].min(), mc[mask].max()}"
-            )
-            binned_data[bii - 1] = np.sum(data[mask, :], axis=0)
+    def bin_detection_rate(
+        self, num_mc_bins: Optional[int] = 51, num_z_bins: Optional[int] = 101
+    ):
 
-        binned_mc = 0.5 * (bins[1:] + bins[:-1])
+        binned_data = self.detection_rate.copy()
+        mc, z = self.chirp_masses, self.redshifts
 
-        assert len(binned_mc) == binned_data.shape[0]
+        if num_mc_bins is not None:
+            mc_bins = np.linspace(MC_RANGE[0], MC_RANGE[1], num_mc_bins)
+            binned_data = bin_data2d(binned_data, mc, mc_bins, axis=0)
+            mc = 0.5 * (mc_bins[1:] + mc_bins[:-1])
+        if num_z_bins is not None:
+            z_bins = np.linspace(Z_RANGE[0], Z_RANGE[1], num_z_bins)
+            binned_data = bin_data2d(binned_data, z, z_bins, axis=1)
+            z = 0.5 * (z_bins[1:] + z_bins[:-1])
 
-        return binned_data, binned_mc, bins
+        assert (len(mc), len(z)) == binned_data.shape
+
+        new_uni = Universe(
+            compas_h5_path=self.compas_h5_path,
+            detection_rate=binned_data,
+            n_systems=self.n_systems,
+            formation_rate=self.formation_rate,
+            merger_rate=self.merger_rate,
+            redshifts=z,
+            chirp_masses=mc,
+            binned=True,
+            SF=self.SF,
+        )
+        print(
+            f"Binning data {self.detection_rate.shape} -> {binned_data.shape}"
+        )
+        return new_uni
 
     def save(self, outdir=".", fname="") -> str:
         """Save the Universe object to a npz file, return the filename"""
@@ -268,7 +279,7 @@ class Universe:
 
     @property
     def label(self):
-        num = len(self.dco_chirp_masses)
+        num = len(self.chirp_masses)
         sf = "_".join(np.array(self.SF).astype(str))
         return f"uni_dco_n{num}_sf_{sf}"
 
@@ -276,12 +287,12 @@ class Universe:
         """Return a dictionary of the Universe object"""
         return dict(
             compas_h5_path=self.compas_h5_path,
-            max_detectable_redshift=self.max_detectable_redshift,
+            n_systems=self.n_systems,
             detection_rate=self.detection_rate,
             formation_rate=self.formation_rate,
             merger_rate=self.merger_rate,
             redshifts=self.redshifts,
-            dco_chirp_masses=self.dco_chirp_masses,
+            chirp_masses=self.chirp_masses,
             SF=self.SF,
         )
 
@@ -311,3 +322,41 @@ class Universe:
         t2 = np.sum(data * np.log(p))
 
         return t1 + t2
+
+
+def bin_data2d(data2d, data1d, bins, axis=0):
+    """Bin data2d and data1d along the given axis using the given 1d bins"""
+
+    num_bins = len(bins)
+    assert num_bins != data2d.shape[axis], "More bins than data-rows!"
+
+    bin_data1d_falls_in = np.digitize(data1d, bins)
+    assert len(bin_data1d_falls_in) == len(
+        data1d
+    ), "Something went wrong with binning"
+    assert data2d.shape[axis] == len(data1d), "Data2d and bins do not match"
+
+    # bin data
+    binned_data_shape = list(data2d.shape)
+    binned_data_shape[axis] = num_bins - 1
+    binned_data = np.zeros(binned_data_shape)
+    for bii in range(1, num_bins):
+        mask = bin_data1d_falls_in == bii
+        masked_data = data2d.take(indices=np.where(mask)[0], axis=axis)
+        if axis == 0:
+            binned_data[bii - 1, :] = np.sum(masked_data, axis=axis)
+        else:
+            binned_data[:, bii - 1] = np.sum(masked_data, axis=axis)
+    return binned_data
+
+
+if __name__ == "__main__":
+    PATH = "/Users/avaj0001/Documents/projects/compas_dev/quasir_compass_blocks/data/COMPAS_Output.h5"
+
+    uni_file = "uni.npz"
+    if not os.path.exists(uni_file):
+        uni = Universe.simulate(PATH, SF=[0.01, 2.77, 2.90, 4.70])
+        uni.save(outdir="out")
+    uni = Universe.from_npz(uni_file)
+    uni_binned = uni.bin_detection_rate()
+    fig = uni_binned.plot_detection_rate_matrix(outdir="out")
