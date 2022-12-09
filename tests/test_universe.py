@@ -14,8 +14,15 @@ class TestUniverse(unittest.TestCase):
             os.path.dirname(__file__),
             "test_data/COMPAS_Output/COMPAS_Output.h5",
         )
-        self.testfile = "../../quasir_compass_blocks/data/COMPAS_Output.h5"
         self.co = CompasOutput.from_h5(self.small_testfile)
+
+        LARGEFILE_PATH = "/home/compas-data/h5out_5M.h5"
+        SMALLFILE_PATH = "../../quasir_compass_blocks/data/COMPAS_Output.h5"
+
+        if os.path.exists(LARGEFILE_PATH):
+            self.testfile = LARGEFILE_PATH
+        else:
+            self.testfile = SMALLFILE_PATH
 
         self.outdir = "out_test/universe"
         if not os.path.exists(self.outdir):

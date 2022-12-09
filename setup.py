@@ -22,6 +22,7 @@ INSTALL_REQUIRES = [
     "plotly",
     "scikit-image",
     "astropy",
+    "matplotlib",
 ]
 EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [
