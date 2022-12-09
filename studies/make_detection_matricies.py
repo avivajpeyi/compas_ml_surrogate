@@ -1,6 +1,6 @@
 import os
 from functools import cache
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,13 +48,11 @@ def generate_set_of_matricies(n=50, save_images=True):
     os.makedirs(outdir, exist_ok=True)
 
     dSF_list = np.round(np.linspace(0.5, 6, n), 3)
-
-    print("Generating matricies")
-    with Pool() as pool:
-        for i in tqdm(
-            pool.imap_unordered(generate_matrix, dSF_list), total=len(dSF_list)
-        ):
-            print(f"... {i} ...")
+    num_workers = cpu_count() - 1
+    print(f"Generating matricies (with {num_workers} workers)")
+    with Pool(num_workers) as pool:
+        for dSF in tqdm(dSF_list):
+            pool.apply_async(generate_matrix, args=(dSF,))
 
     if save_images:
         make_gif(
