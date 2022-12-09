@@ -15,7 +15,7 @@ from compas_surrogate.cosmic_integration.CosmicIntegration import (
 logger = logging.getLogger()
 
 MC_RANGE = [1, 40]
-Z_RANGE = [0, 0.8]
+Z_RANGE = [0, 0.6]
 O2_DURATION = 0.5  # in yrs
 
 
@@ -147,7 +147,7 @@ class Universe:
 
     def plot_detection_rate_matrix(
         self,
-        fname="",
+        save=True,
         outdir=".",
     ):
         z, mc, rate2d = self.redshifts, self.chirp_masses, self.detection_rate
@@ -206,13 +206,18 @@ class Universe:
 
         plt.tight_layout()
 
-        if not outdir == ".":
-            fname = os.path.join(outdir, f"{self.label}_det_matrix.png")
-
-        if not fname == "":
+        if save:
+            fname = self._get_fname(outdir, extra="det_matrix", ext="png")
             plt.savefig(fname, bbox_inches="tight", pad_inches=0)
 
         return fig
+
+    def _get_fname(self, outdir=".", fname="", extra="", ext="npz"):
+        if fname == "":
+            fname = f"{self.label}"
+            if extra:
+                fname += f"_{extra}"
+        return os.path.join(outdir, f"{fname}.{ext}")
 
     def plot_merger_rate(self):
         """Plot the merger rate"""
@@ -262,6 +267,7 @@ class Universe:
             redshifts=z,
             chirp_masses=mc,
             binned=True,
+            ci_runtime=self.ci_runtime,
             SF=self.SF,
         )
         print(
@@ -269,19 +275,21 @@ class Universe:
         )
         return new_uni
 
-    def save(self, outdir=".", fname="") -> str:
+    def save(self, outdir=".") -> str:
         """Save the Universe object to a npz file, return the filename"""
         data = {k: np.asarray(v) for k, v in self.__dict__().items()}
-        if fname == "":
-            fname = os.path.join(outdir, f"{self.label}.npz")
+        fname = self._get_fname(outdir)
         np.savez(fname, **data)
         return fname
 
     @property
     def label(self):
-        num = len(self.chirp_masses)
+        num = self.n_systems
         sf = "_".join(np.array(self.SF).astype(str))
-        return f"uni_dco_n{num}_sf_{sf}"
+        label = f"uni_n{num}_sf_{sf}"
+        if self.binned:
+            label = f"binned_{label}"
+        return label
 
     def __dict__(self):
         """Return a dictionary of the Universe object"""
@@ -352,6 +360,7 @@ def bin_data2d(data2d, data1d, bins, axis=0):
 
 if __name__ == "__main__":
     PATH = "/Users/avaj0001/Documents/projects/compas_dev/quasir_compass_blocks/data/COMPAS_Output.h5"
+    from tqdm.auto import tqdm
 
     uni_file = "uni.npz"
     if not os.path.exists(uni_file):

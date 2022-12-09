@@ -5,6 +5,7 @@ import numpy as np
 
 from compas_surrogate.compas_output_parser.compas_output import CompasOutput
 from compas_surrogate.cosmic_integration.universe import Universe
+from compas_surrogate.plotting.gif_generator import make_gif
 
 
 class TestUniverse(unittest.TestCase):
@@ -21,9 +22,7 @@ class TestUniverse(unittest.TestCase):
             os.makedirs(self.outdir, exist_ok=True)
 
     def test_universe(self):
-        uni = Universe.from_compas_h5(
-            self.testfile, SF=[0.01, 2.77, 2.90, 4.70]
-        )
+        uni = Universe.simulate(self.testfile, SF=[0.01, 2.77, 2.90, 4.70])
         print("run complete")
         outfn = uni.save(outdir=self.outdir)
         new_uni = Universe.from_npz(outfn)
@@ -37,8 +36,18 @@ class TestUniverse(unittest.TestCase):
         )
 
     def test_different_sf_universes(self):
-        for dSF in [4.7 * i for i in range(1, 11)]:
+        for i, dSF in enumerate(np.linspace(0.5, 5.7, 30)):
+            dSF = np.round(dSF, 2)
             SF = [0.01, 2.77, 2.90, dSF]
-            uni = Universe.from_compas_h5(self.testfile, SF=SF)
-            uni.plot_detection_rate_matrix(outdir=self.outdir)
-            print("Done with SF = ", SF)
+            uni = Universe.simulate(self.testfile, SF=SF)
+            uni = uni.bin_detection_rate()
+            fig = uni.plot_detection_rate_matrix(save=False)
+            fig.savefig(
+                os.path.join(self.outdir, f"detection_rate_matrix_{i:002}.png")
+            )
+        make_gif(
+            os.path.join(self.outdir, "detection_rate_matrix_*.png"),
+            os.path.join(self.outdir, "detection_rate_matrix.gif"),
+            duration=150,
+            loop=True,
+        )
