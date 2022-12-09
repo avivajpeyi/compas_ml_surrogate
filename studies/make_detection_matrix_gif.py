@@ -30,11 +30,13 @@ def main():
         uni = Universe.simulate(fname, SF=SF)
         fig = uni.plot_detection_rate_matrix(save=False)
         fig.savefig(os.path.join(outdir, f"detection_rate_matrix_{i:002}.png"))
+        plt.close(fig)
         uni = uni.bin_detection_rate()
         fig = uni.plot_detection_rate_matrix(save=False)
         fig.savefig(
             os.path.join(outdir, f"binned_detection_rate_matrix_{i:002}.png")
         )
+        plt.close(fig)
 
     make_gif(
         os.path.join(outdir, "detection_rate_matrix_*.png"),
