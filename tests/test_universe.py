@@ -16,7 +16,7 @@ class TestUniverse(unittest.TestCase):
         )
         self.co = CompasOutput.from_h5(self.small_testfile)
 
-        LARGEFILE_PATH = "/home/compas-data/h5out_5M.h5"
+        LARGEFILE_PATH = "/home/compas-data/h5out_32M.h5"
         SMALLFILE_PATH = "../../quasir_compass_blocks/data/COMPAS_Output.h5"
 
         if os.path.exists(LARGEFILE_PATH):
