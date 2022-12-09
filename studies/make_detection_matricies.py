@@ -54,6 +54,9 @@ def generate_set_of_matricies(n=50, save_images=True):
         for dSF in tqdm(dSF_list):
             pool.apply_async(generate_matrix, args=(dSF,))
 
+        pool.close()
+        pool.join()
+
     if save_images:
         make_gif(
             os.path.join(outdir, "detection_rate_matrix_*.png"),
