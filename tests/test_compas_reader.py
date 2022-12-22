@@ -13,6 +13,7 @@ class TestCompasOutputReader(unittest.TestCase):
             "test_data",
             "COMPAS_Output/COMPAS_Output.h5",
         )
+        self.res_dir = "/Users/avaj0001/Documents/projects/compas_dev/quasir_compass_blocks/data/COMPAS_Output.h5"
         self.co = CompasOutput.from_h5(self.res_dir)
         self.num_sys = 500
 
@@ -25,6 +26,7 @@ class TestCompasOutputReader(unittest.TestCase):
         self.assertEqual(binary_0, self.co.get_binary(seed=binary_0_seed))
 
     def test_html_repr(self):
+        print("Loaded file, now making html")
         html = self.co._repr_html_()
         self.assertIsInstance(html, str)
 

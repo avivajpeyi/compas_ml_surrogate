@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 from typing import Dict, List, Optional, Tuple
@@ -8,6 +9,8 @@ import pandas as pd
 from .h5_parser import parse_h5_file
 from .html_templates import css, element_template, html_template
 from .types import DCOType, StellarType
+
+logging.getLogger().setLevel(logging.DEBUG)
 
 
 class CompasOutput:
@@ -108,11 +111,20 @@ class CompasOutput:
 
         data = parse_h5_file(h5path)
         run_details = data["Run_Details"]
-        for k in data.keys():
-            data[k] = pd.DataFrame(data[k])
-        data["Run_Details"] = pd.DataFrame(run_details).to_dict("records")[0]
-        data["outdir"] = h5path
-        return cls(**data)
+        keys = data.keys()
+        logging.debug(f"COMPAS run with keys: {keys}")
+        new_data = {}
+        for k in keys:
+            logging.debug(f"Reading {k}")
+            try:
+                new_data[k] = pd.DataFrame(data[k])
+            except Exception as e:
+                logging.debug(f"Failed to read {k} with error {e}")
+        new_data["Run_Details"] = pd.DataFrame(run_details).to_dict("records")[
+            0
+        ]
+        new_data["outdir"] = h5path
+        return cls(**new_data)
 
     def __repr__(self):
         rep = ["COMPAS OUTPUT"]

@@ -25,8 +25,6 @@ class Universe:
         compas_h5_path,
         detection_rate,
         n_systems,
-        formation_rate,
-        merger_rate,
         redshifts,
         chirp_masses,
         SF,
@@ -39,8 +37,6 @@ class Universe:
         self.chirp_mass_rate = np.sum(detection_rate, axis=1)
         self.redshift_rate = np.sum(detection_rate, axis=0)
         self.n_systems = n_systems
-        self.formation_rate = formation_rate
-        self.merger_rate = merger_rate
         self.redshifts = redshifts
         self.chirp_masses = chirp_masses
         self.binned = binned
@@ -111,16 +107,11 @@ class Universe:
                 f"does not match chirp mass + redshift bins ({(len(chirp_masses), len(redshifts))})"
             )
 
-        merger_rate = merger_rate[:, redshift_mask]
-        formation_rate = formation_rate[:, redshift_mask]
-
         uni = cls(
             compas_h5_path,
             chirp_masses=chirp_masses,
             n_systems=len(chirp_masses),
             detection_rate=detection_rate[sorted_idx, :],
-            merger_rate=merger_rate[sorted_idx, :],
-            formation_rate=formation_rate[sorted_idx, :],
             redshifts=redshifts,
             ci_runtime=runtime,
             SF=SF,
@@ -219,27 +210,6 @@ class Universe:
                 fname += f"_{extra}"
         return os.path.join(outdir, f"{fname}.{ext}")
 
-    def plot_merger_rate(self):
-        """Plot the merger rate"""
-        plt.figure()
-        plt.plot(self.redshifts, self.merger_rate)
-        plt.xlabel("Redshift")
-        plt.ylabel("Merger rate")
-
-    def plot_binned_merger_rate(self, bin_width=0.1):
-        """Plot the binned merger rate"""
-        plt.figure()
-        z = self.redshifts
-        m = self.merger_rate
-        z_bins = np.arange(0, 10, bin_width)
-        m_bins = np.zeros_like(z_bins)
-        for i, z_bin in enumerate(z_bins):
-            m_bins[i] = np.sum(m[(z >= z_bin) & (z < z_bin + bin_width)])
-        plt.plot(z_bins, m_bins)
-        plt.xlabel("Redshift")
-        plt.ylabel("Merger rate")
-        plt.yscale("log")
-
     def bin_detection_rate(
         self, num_mc_bins: Optional[int] = 51, num_z_bins: Optional[int] = 101
     ):
@@ -262,8 +232,6 @@ class Universe:
             compas_h5_path=self.compas_h5_path,
             detection_rate=binned_data,
             n_systems=self.n_systems,
-            formation_rate=self.formation_rate,
-            merger_rate=self.merger_rate,
             redshifts=z,
             chirp_masses=mc,
             binned=True,
@@ -297,8 +265,6 @@ class Universe:
             compas_h5_path=self.compas_h5_path,
             n_systems=self.n_systems,
             detection_rate=self.detection_rate,
-            formation_rate=self.formation_rate,
-            merger_rate=self.merger_rate,
             redshifts=self.redshifts,
             chirp_masses=self.chirp_masses,
             SF=self.SF,

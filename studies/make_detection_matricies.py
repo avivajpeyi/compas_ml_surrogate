@@ -48,9 +48,9 @@ def generate_set_of_matricies(n=50, save_images=True):
     os.makedirs(outdir, exist_ok=True)
 
     dSF_list = np.round(np.linspace(0.5, 6, n), 3)
-    num_workers = cpu_count() - 1
+    num_workers = cpu_count()
     print(f"Generating matricies (with {num_workers} workers)")
-    with Pool(num_workers) as pool:
+    with Pool(num_workers // 2) as pool:
         for dSF in tqdm(dSF_list):
             pool.apply_async(generate_matrix, args=(dSF,))
 
