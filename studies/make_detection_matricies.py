@@ -26,6 +26,7 @@ def get_compas_output_fname():
 
 
 def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
+    print(f"... Starting  {dSF} ...")
     SF = [0.01, 2.77, 2.90, dSF]
     uni = Universe.simulate(get_compas_output_fname(), SF=SF)
 
@@ -41,7 +42,7 @@ def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
             os.path.join(outdir, f"binned_detection_rate_matrix_{dSF}.png")
         )
         plt.close(fig)
-    print(f"Finished computing for {dSF} --> {uni.label}")
+    print(f"... Finished computing for {dSF} --> {uni.label} ...")
 
 
 def generate_set_of_matricies(n=50, save_images=True):
