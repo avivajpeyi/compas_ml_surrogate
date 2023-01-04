@@ -320,6 +320,7 @@ class Universe:
 
     def sample_possible_event_matrix(self, n_obs: int = None):
         """Make a fake detection matrix with the same shape as the universe"""
+        # FIXME: draw from the detection rate distribution using poisson distributions
         if n_obs is None:
             n_obs = self.n_detections()
         rate2d = np.zeros(self.detection_rate.shape)
