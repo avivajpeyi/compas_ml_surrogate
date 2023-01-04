@@ -34,13 +34,14 @@ def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
 
     if save_images:
         fig = uni.plot_detection_rate_matrix(save=False)
-        fig.savefig(os.path.join(outdir, f"detection_rate_matrix_{i:002}.png"))
+        fig.savefig(os.path.join(outdir, f"detection_rate_matrix_{dSF}.png"))
         plt.close(fig)
         fig = binned_uni.plot_detection_rate_matrix(save=False)
         fig.savefig(
-            os.path.join(outdir, f"binned_detection_rate_matrix_{i:002}.png")
+            os.path.join(outdir, f"binned_detection_rate_matrix_{dSF}.png")
         )
         plt.close(fig)
+    print(f"Finished computing for {dSF} --> {uni.label}")
 
 
 def generate_set_of_matricies(n=50, save_images=True):
