@@ -51,6 +51,8 @@ def generate_set_of_matricies(n=50, save_images=True):
     dSF_list = np.round(np.linspace(0.5, 6, n), 5)
     print(f"Generating matricies for SF: {dSF_list}")
     num_workers = cpu_count()
+    if num_workers > 64:
+        num_workers = 64
     print(f"Generating matricies (with {num_workers} workers)")
     with Pool(num_workers // 2) as pool:
         for dSF in tqdm(dSF_list):
