@@ -54,11 +54,12 @@ def generate_set_of_matricies(n=50, save_images=True):
     num_workers = cpu_count()
     if num_workers > 64:
         num_workers = 64
+    elif num_workers < 16:
+        num_workers = 4
     print(f"Generating matricies (with {num_workers} workers)")
-    with Pool(num_workers // 2) as pool:
+    with Pool(num_workers) as pool:
         for dSF in tqdm(dSF_list):
             pool.apply_async(generate_matrix, args=(dSF,))
-
         pool.close()
         pool.join()
 
