@@ -48,7 +48,8 @@ def generate_set_of_matricies(n=50, save_images=True):
     outdir = "out_universe"
     os.makedirs(outdir, exist_ok=True)
 
-    dSF_list = np.round(np.linspace(0.5, 6, n), 3)
+    dSF_list = np.round(np.linspace(0.5, 6, n), 5)
+    print(f"Generating matricies for SF: {dSF_list}")
     num_workers = cpu_count()
     print(f"Generating matricies (with {num_workers} workers)")
     with Pool(num_workers // 2) as pool:
