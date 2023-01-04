@@ -4,8 +4,7 @@ from multiprocessing import Pool, cpu_count
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from tqdm.auto import tqdm
+from tqdm.contrib.concurrent import process_map
 
 from compas_surrogate.cosmic_integration.universe import Universe
 from compas_surrogate.plotting.gif_generator import make_gif
@@ -45,23 +44,20 @@ def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
     print(f"... Finished computing for {dSF} --> {uni.label} ...")
 
 
-def generate_set_of_matricies(n=50, save_images=True):
-    outdir = "out_universe"
-    os.makedirs(outdir, exist_ok=True)
-
-    dSF_list = np.round(np.linspace(0.5, 6, n), 5)
-    print(f"Generating matricies for SF: {dSF_list}")
+def get_num_workers():
     num_workers = cpu_count()
     if num_workers > 64:
         num_workers = 64
     elif num_workers < 16:
         num_workers = 4
-    print(f"Generating matricies (with {num_workers} workers)")
-    with Pool(num_workers) as pool:
-        for dSF in tqdm(dSF_list):
-            pool.apply_async(generate_matrix, args=(dSF,))
-        pool.close()
-        pool.join()
+    return num_workers
+
+
+def generate_set_of_matricies(n=50, save_images=True, outdir=OUTDIR):
+    os.makedirs(outdir, exist_ok=True)
+    dSF_list = np.round(np.linspace(0.5, 6, n), 5)
+    print(f"Generating matricies (with {get_num_workers()} for SF: {dSF_list}")
+    process_map(generate_matrix, dSF_list, max_workers=get_num_workers())
 
     if save_images:
         make_gif(
