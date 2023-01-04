@@ -5,8 +5,10 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from astropy import units
 from matplotlib.gridspec import GridSpec
+from scipy.interpolate import RectBivariateSpline
 
 from compas_surrogate.cosmic_integration.CosmicIntegration import (
     find_detection_rate,
@@ -28,7 +30,7 @@ class Universe:
         redshifts,
         chirp_masses,
         SF,
-        ci_runtime,
+        ci_runtime=np.inf,
         binned=False,
     ):
 
@@ -123,8 +125,8 @@ class Universe:
         )
         return uni
 
-    def n_detections(self, duration=O2_DURATION):
-        """Calculate the number of detections in a given duration"""
+    def n_detections(self, duration=1):
+        """Calculate the number of detections in a given duration (in years)"""
         return int(np.sum(self.detection_rate) * duration)
 
     @classmethod
@@ -134,22 +136,36 @@ class Universe:
         for key in data:
             if data[key].dtype == "<U48":
                 data[key] = data[key].item()
+        valid_keys = [
+            "compas_h5_path",
+            "n_systems",
+            "detection_rate",
+            "redshifts",
+            "chirp_masses",
+            "SF",
+        ]
+        data = {k: data[k] for k in valid_keys}
         return cls(**data)
 
     def plot_detection_rate_matrix(
-        self,
-        save=True,
-        outdir=".",
+        self, save=True, outdir=".", smoothed_2d_data=False
     ):
-        z, mc, rate2d = self.redshifts, self.chirp_masses, self.detection_rate
 
         title_txt = f"Detection Rate Matrix ({self.n_systems} systems)"
         title_txt += f"\nSF: {', '.join(np.array(self.SF).astype(str))}"
         if self.binned:
             title_txt = "Binned " + title_txt
+        if smoothed_2d_data:
+            title_txt = "Smoothed " + title_txt
 
+        z, mc, rate2d = self.redshifts, self.chirp_masses, self.detection_rate
         low_mc, high_mc = np.min(mc), np.max(mc)
         low_z, high_z = np.min(z), np.max(z)
+
+        if smoothed_2d_data:
+            z = np.linspace(low_z, high_z, 20)
+            mc = np.linspace(low_mc, high_mc, 20)
+            rate2d = self.get_detection_rate_spline()(mc, z)
 
         fig = plt.figure(figsize=(5, 5))
         gs = GridSpec(4, 4)
@@ -162,19 +178,21 @@ class Universe:
             rate2d,
             cmap=plt.cm.hot,
             norm="linear",
-            vmin=np.quantile(rate2d, 0.001),
+            vmin=np.quantile(rate2d, 0.5),
             vmax=np.quantile(rate2d, 0.99),
             aspect="auto",
             interpolation="gaussian",
             origin="lower",
-            extent=[low_z, high_z, low_mc, high_mc],
+            extent=self.zmc_extents,
         )
 
         fig.suptitle(title_txt)
         ax_2d.set_xlabel("Redshift")
         ax_2d.set_ylabel("Chirp mass")
         ax_2d.set_facecolor("black")
-        annote = f"Grid: {rate2d.shape}\nN det: {self.n_detections(1)}/yr"
+        annote = (
+            f"Grid: {rate2d.shape}\nN det: {self.n_detections(duration=1)}/yr"
+        )
         ax_2d.annotate(
             annote,
             xy=(1, 0),
@@ -185,8 +203,8 @@ class Universe:
             va="bottom",
             color="white",
         )
-        ax_right.plot(self.chirp_mass_rate, mc, color="red")
-        ax_top.plot(z, self.redshift_rate, color="red")
+        ax_right.plot(self.chirp_mass_rate, self.chirp_masses, color="red")
+        ax_top.plot(self.redshifts, self.redshift_rate, color="red")
         ax_right.axis("off")
         ax_top.axis("off")
 
@@ -243,6 +261,24 @@ class Universe:
         )
         return new_uni
 
+    def get_detection_rate_spline(self):
+        z, mc, rate2d = self.redshifts, self.chirp_masses, self.detection_rate
+        min_rate = np.quantile(rate2d, 0.6)
+        max_rate = np.quantile(rate2d, 0.99)
+        rate2d = np.clip(rate2d, min_rate, max_rate)
+        return RectBivariateSpline(mc, z, rate2d)
+
+    def get_detection_rate_dataframe(self):
+        z, mc = self.redshifts, self.chirp_masses
+        rate = self.detection_rate.ravel()
+        zz, mcc = np.meshgrid(z, mc)
+        df = pd.DataFrame({"z": zz.ravel(), "mc": mcc.ravel(), "rate": rate})
+
+        # check no nan in dataframe
+        assert not df.isna().any().any()
+
+        return df
+
     def save(self, outdir=".") -> str:
         """Save the Universe object to a npz file, return the filename"""
         data = {k: np.asarray(v) for k, v in self.__dict__().items()}
@@ -259,6 +295,10 @@ class Universe:
             label = f"binned_{label}"
         return label
 
+    @property
+    def zmc_extents(self):
+        return Z_RANGE + MC_RANGE
+
     def __dict__(self):
         """Return a dictionary of the Universe object"""
         return dict(
@@ -270,32 +310,54 @@ class Universe:
             SF=self.SF,
         )
 
-    def log_likelihood(self, data):
-        """Calculate the likelihood of the data given the Universe object"""
+    def sample_observations(self, n_obs: int = None):
+        if n_obs is None:
+            n_obs = self.n_detections()
+        df = self.get_detection_rate_dataframe()
+        df = df.sort_values("rate", ascending=False)
+        n_events = df.sample(weights=df.rate, n=n_obs)
+        return n_events[["mc", "z"]].values
 
-        u = np.sum(self.detection_rate)
+    def sample_possible_event_matrix(self, n_obs: int = None):
+        """Make a fake detection matrix with the same shape as the universe"""
+        if n_obs is None:
+            n_obs = self.n_detections()
+        rate2d = np.zeros(self.detection_rate.shape)
+        event_mcz = self.sample_observations(n_obs)
+        for mc, z in event_mcz:
+            mc_bin, z_bin = self.get_matrix_bin_idx(mc, z)
+            rate2d[mc_bin, z_bin] += 1
+        return rate2d, event_mcz
 
-        if u <= 0.0:
-            return -np.inf
+    def get_matrix_bin_idx(self, mc, z):
+        mc_bin = np.argmin(np.abs(self.chirp_masses - mc))
+        z_bin = np.argmin(np.abs(self.redshifts - z))
+        return mc_bin, z_bin
 
-        nObs = np.sum(
-            data
-        )  # do this outside the function and pass it in if you're doing this many times in a loop
+    def prob_of_mcz(self, mc, z):
+        mc_bin, z_bin = self.get_matrix_bin_idx(mc, z)
+        return self.detection_rate[mc_bin, z_bin] / self.n_detections()
 
-        t1 = nObs * np.log(u) - u
 
-        det_shape = self.detection_rate.shape
+def plot_event_matrix_on_universe_detection_matrix(
+    universe: Universe, true_rate2d: np.ndarray = None
+):
+    """Plot the fake detection matrix"""
+    if true_rate2d is None:
+        true_rate2d._ = universe.sample_possible_event_matrix()
 
-        p = detections / u
-        p += (
-            1.0 / float(det_shape.shape[0]) / float(det_shape.shape[1])
-        )  # to avoid p = 0.0
-        pSum = np.sum(p)
-        p /= pSum
-
-        t2 = np.sum(data * np.log(p))
-
-        return t1 + t2
+    universe.plot_detection_rate_matrix()
+    fig = plt.gcf()
+    axes = fig.get_axes()
+    axes[0].imshow(
+        true_rate2d,
+        origin="lower",
+        extent=universe.zmc_extents,
+        aspect="auto",
+        cmap="tab10",
+        alpha=1.0 * (true_rate2d > 0),
+    )
+    return fig
 
 
 def bin_data2d(data2d, data1d, bins, axis=0):
