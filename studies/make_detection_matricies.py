@@ -28,7 +28,6 @@ def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
     print(f"... Starting  {dSF} ...")
     SF = [0.01, 2.77, 2.90, dSF]
     uni = Universe.simulate(get_compas_output_fname(), SF=SF)
-
     binned_uni = uni.bin_detection_rate()
     binned_uni.save(outdir=outdir)
 
@@ -47,7 +46,7 @@ def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
 def get_num_workers():
     num_workers = cpu_count()
     if num_workers > 64:
-        num_workers = 64
+        num_workers = 32
     elif num_workers < 16:
         num_workers = 4
     return num_workers

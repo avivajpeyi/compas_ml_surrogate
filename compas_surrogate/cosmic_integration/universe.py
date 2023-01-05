@@ -45,6 +45,11 @@ class Universe:
         self.ci_runtime = ci_runtime
         self.SF = SF
 
+    @staticmethod
+    def does_savefile_exist(self, outdir="."):
+        fname = self._get_fname(outdir)
+        return os.path.exists(fname)
+
     @classmethod
     def simulate(cls, compas_h5_path, SF=None):
         """Create a Universe object from a COMPAS h5 file (run cosmic integrator)"""
