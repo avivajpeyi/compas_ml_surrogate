@@ -14,7 +14,7 @@ OUTDIR = "out_universe"
 
 @cache
 def get_compas_output_fname():
-    LARGEFILE_PATH = "/home/compas-data/h5out_32M.h5"
+    LARGEFILE_PATH = "/home/compas-data/h5out_5M.h5"
     SMALLFILE_PATH = "../../quasir_compass_blocks/data/COMPAS_Output.h5"
 
     if os.path.exists(LARGEFILE_PATH):
@@ -46,7 +46,7 @@ def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
 def get_num_workers():
     num_workers = cpu_count()
     if num_workers > 64:
-        num_workers = 32
+        num_workers = 16
     elif num_workers < 16:
         num_workers = 4
     return num_workers
