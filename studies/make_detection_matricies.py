@@ -85,7 +85,7 @@ def generate_set_of_matricies(n=50, save_images=True, outdir=OUTDIR):
 
 
 def main():
-    generate_set_of_matricies(n=5, save_images=False)
+    generate_set_of_matricies(n=1500, save_images=False)
 
 
 if __name__ == "__main__":
