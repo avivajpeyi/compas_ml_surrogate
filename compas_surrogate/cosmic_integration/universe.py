@@ -51,7 +51,7 @@ class Universe:
         return os.path.exists(fname)
 
     @classmethod
-    def simulate(cls, compas_h5_path, SF=None):
+    def simulate(cls, compas_h5_path, SF=None, muz=-0.23, sigma0=0.39):
         """Create a Universe object from a COMPAS h5 file (run cosmic integrator)"""
         if SF is None:
             SF = [0.01, 2.77, 2.90, 4.70]
@@ -86,8 +86,8 @@ class Universe:
             cSF=SF[2],
             dSF=SF[3],
             mu0=0.035,
-            muz=-0.23,
-            sigma0=0.39,
+            muz=muz,
+            sigma0=sigma0,
             sigmaz=0.0,
             alpha=0.0,
             min_logZ=-12.0,

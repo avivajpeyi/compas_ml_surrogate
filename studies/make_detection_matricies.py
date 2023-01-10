@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
+from compas_surrogate.cosmic_integration.star_formation_paramters import (
+    draw_star_formation_samples,
+)
 from compas_surrogate.cosmic_integration.universe import Universe
 from compas_surrogate.plotting.gif_generator import make_gif
 
@@ -24,10 +27,13 @@ def get_compas_output_fname():
     return testfile
 
 
-def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
-    print(f"... Starting  {dSF} ...")
-    SF = [0.01, 2.77, 2.90, dSF]
-    uni = Universe.simulate(get_compas_output_fname(), SF=SF)
+def generate_matrix(sf_sample, save_images=False, outdir=OUTDIR):
+    SF = [sf_sample["aSF"], 2.77, 2.90, sf_sample["dSF"]]
+    muz = sf_sample.get("muz", -0.23)
+    sigma0 = sf_sample.get("sigma0", 0.39)
+    sf_params = dict(SF=SF, muz=muz, sigma0=sigma0)
+    print(f"... Starting  {sf_params} ...")
+    uni = Universe.simulate(get_compas_output_fname(), **sf_params)
     binned_uni = uni.bin_detection_rate()
     binned_uni.save(outdir=outdir)
 
@@ -40,7 +46,7 @@ def generate_matrix(dSF, save_images=False, outdir=OUTDIR):
             os.path.join(outdir, f"binned_detection_rate_matrix_{dSF}.png")
         )
         plt.close(fig)
-    print(f"... Finished computing for {dSF} --> {uni.label} ...")
+    print(f"... Finished computing for {sf_params} --> {uni.label} ...")
 
 
 def get_num_workers():
@@ -54,9 +60,14 @@ def get_num_workers():
 
 def generate_set_of_matricies(n=50, save_images=True, outdir=OUTDIR):
     os.makedirs(outdir, exist_ok=True)
-    dSF_list = np.round(np.linspace(0.5, 6, n), 5)
-    print(f"Generating matricies (with {get_num_workers()} for SF: {dSF_list}")
-    process_map(generate_matrix, dSF_list, max_workers=get_num_workers())
+    sf_samples = draw_star_formation_samples(
+        n, parameters=["aSF", "dSF"], as_list=True
+    )
+
+    print(
+        f"Generating matricies (with {get_num_workers()} for {n} SF samples)"
+    )
+    process_map(generate_matrix, sf_samples, max_workers=get_num_workers())
 
     if save_images:
         make_gif(
@@ -74,7 +85,7 @@ def generate_set_of_matricies(n=50, save_images=True, outdir=OUTDIR):
 
 
 def main():
-    generate_set_of_matricies(n=500, save_images=False)
+    generate_set_of_matricies(n=5, save_images=False)
 
 
 if __name__ == "__main__":

@@ -1,20 +1,39 @@
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
-from bilby.core.prior import PriorDict, Uniform
+from scipy.stats import qmc
+from scipy.stats.qmc import LatinHypercube
 
-STAR_FORMATION_PRIOR = PriorDict(
-    dict(
-        aSF=Uniform(name="aSF", minimum=0.0, maximum=1.0),
-        bSF=Uniform(name="bSF", minimum=0.0, maximum=1.0),
-        cSF=Uniform(name="cSF", minimum=0.0, maximum=1.0),
-        dSF=Uniform(name="dSF", minimum=0.5, maximum=6, latex_label="$dSF$"),
-        alpha=Uniform(name="alpha", minimum=0.0, maximum=1.0),
-        beta=Uniform(name="beta", minimum=0.0, maximum=1.0),
-    )
+STAR_FORMATION_RANGES = dict(
+    muz=[-0.5, -0.001],  # Jeff's alpha
+    sigma0=[0.1, 0.6],  # Jeff's sigma
+    aSF=[0.005, 0.015],
+    dSF=[4.2, 5.2],
 )
 
 
-def draw_star_formation_samples(n=1000) -> Dict[str, np.ndarray]:
-    samples = STAR_FORMATION_PRIOR.sample(n)
-    return samples
+def draw_star_formation_samples(
+    n=1000, parameters=None, as_list=False
+) -> Union[Dict[str, np.ndarray], List[Dict]]:
+    """Draw samples from the star formation parameters."""
+    if parameters is None:
+        parameters = ["muz", "sigma0", "aSF", "dSF"]
+    assert all(
+        [p in STAR_FORMATION_RANGES for p in parameters]
+    ), "Invalid parameters"
+    num_dim = len(parameters)
+    sampler = LatinHypercube(d=num_dim)
+    samples = sampler.random(n)
+    parameter_ranges = np.array([STAR_FORMATION_RANGES[p] for p in parameters])
+    lower_bound = parameter_ranges[:, 0]
+    upper_bound = parameter_ranges[:, 1]
+    scaled_samples = qmc.scale(
+        samples, l_bounds=lower_bound, u_bounds=upper_bound
+    )
+    dict_of_params = {
+        p: scaled_samples[:, i] for i, p in enumerate(parameters)
+    }
+    if as_list:
+        return [
+            dict(zip(dict_of_params, t)) for t in zip(*dict_of_params.values())
+        ]
