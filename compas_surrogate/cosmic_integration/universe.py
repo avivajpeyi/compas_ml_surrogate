@@ -30,6 +30,8 @@ class Universe:
         redshifts,
         chirp_masses,
         SF,
+        muz=-0.23,
+        sigma0=0.39,
         ci_runtime=np.inf,
         binned=False,
     ):
@@ -44,6 +46,8 @@ class Universe:
         self.binned = binned
         self.ci_runtime = ci_runtime
         self.SF = SF
+        self.muz = muz
+        self.sigma0 = sigma0
 
     @staticmethod
     def does_savefile_exist(self, outdir="."):
@@ -122,6 +126,8 @@ class Universe:
             redshifts=redshifts,
             ci_runtime=runtime,
             SF=SF,
+            muz=muz,
+            sigma0=sigma0,
         )
 
         print(f"Time taken for CI: {runtime:.2f} s")
@@ -295,6 +301,7 @@ class Universe:
     def label(self):
         num = self.n_systems
         sf = "_".join(np.array(self.SF).astype(str))
+
         label = f"uni_n{num}_sf_{sf}"
         if self.binned:
             label = f"binned_{label}"
