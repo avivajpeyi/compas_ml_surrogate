@@ -26,6 +26,7 @@ INSTALL_REQUIRES = [
     # "xarray",
     "plotly",
     "loguru",
+    "tqdm",
 ]
 EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [

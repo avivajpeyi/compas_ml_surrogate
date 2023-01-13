@@ -1,35 +1,14 @@
 import os
 
-import requests
-from tqdm.auto import tqdm
-
 from compas_surrogate.cosmic_integration.universe import Universe
 from compas_surrogate.logger import logger
+from compas_surrogate.utils import download_file
 
 CLEAN = True
 DATA_LINK = (
     "https://sandbox.zenodo.org/record/1145903/files/uni.npz?download=1"
 )
 DATA_FILE = "uni.npz"
-
-
-def download_file(url, filename):
-    """
-    Helper method handling downloading large files from `url` to `filename`. Returns a pointer to `filename`.
-    """
-    chunkSize = 1024
-    r = requests.get(url, stream=True)
-    with open(filename, "wb") as f:
-        pbar = tqdm(
-            unit="B",
-            total=int(r.headers["Content-Length"]),
-            desc="Downloading data",
-        )
-        for chunk in r.iter_content(chunk_size=chunkSize):
-            if chunk:  # filter out keep-alive new chunks
-                pbar.update(len(chunk))
-                f.write(chunk)
-    return filename
 
 
 def main():
