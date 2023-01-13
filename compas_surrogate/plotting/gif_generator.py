@@ -2,6 +2,8 @@ from glob import glob
 
 from PIL import Image
 
+from compas_surrogate.logger import logger
+
 
 class GifGenerator:
     def __init__(self, regex, fname, duration=100, loop=0):
@@ -23,14 +25,18 @@ class GifGenerator:
         if self.loop:  # add images in reverse order
             images.extend(images[::-1])
 
-        images[0].save(
-            self.fname,
-            save_all=True,
-            append_images=images[1:],
-            duration=self.duration,
-            loop=0,
-            optimize=False,
-        )
+        if len(images) > 1:
+
+            images[0].save(
+                self.fname,
+                save_all=True,
+                append_images=images[1:],
+                duration=self.duration,
+                loop=0,
+                optimize=False,
+            )
+        else:
+            logger.critical(f"No images found for {self.regex}")
 
 
 def make_gif(regex, fname, duration=100, loop=True):

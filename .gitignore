@@ -13,6 +13,7 @@ venv
 *.png
 tests/out_test/
 *.npz
+out_*
 
 ## Core latex/pdflatex auxiliary files:
 *.aux

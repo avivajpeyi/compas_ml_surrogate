@@ -38,6 +38,7 @@ class CompasOutput:
         self.h5 = h5
 
     def printSummary(self, h5name=None, h5file=None, excludeList=""):
+        """LIFTED FROM COMPAS UTILS"""
         h5name = self.h5
         h5file = h5py.File(h5name, "r")
         ok = True  # result

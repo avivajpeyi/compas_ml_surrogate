@@ -17,13 +17,15 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3",
 ]
 INSTALL_REQUIRES = [
-    "tensorflow>=2.0.0",
-    "xarray",
-    "plotly",
     "scikit-image",
     "astropy",
     "matplotlib",
-    "sbi",
+    "h5py",
+    # "sbi",
+    # "tensorflow>=2.0.0",
+    # "xarray",
+    "plotly",
+    "loguru",
 ]
 EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [

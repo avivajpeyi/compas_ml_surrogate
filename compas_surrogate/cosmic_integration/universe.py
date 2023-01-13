@@ -1,7 +1,9 @@
+import io
 import logging
 import os
 import time
-from typing import Optional
+from contextlib import redirect_stdout
+from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,8 +15,7 @@ from scipy.interpolate import RectBivariateSpline
 from compas_surrogate.cosmic_integration.CosmicIntegration import (
     find_detection_rate,
 )
-
-logger = logging.getLogger()
+from compas_surrogate.logger import logger
 
 MC_RANGE = [1, 40]
 Z_RANGE = [0, 0.6]
@@ -61,52 +62,58 @@ class Universe:
             SF = [0.01, 2.77, 2.90, 4.70]
         assert len(SF) == 4, "SF must be a list of length 4"
 
-        start_time = time.time()
-        (
-            detection_rate,
-            formation_rate,
-            merger_rate,
-            redshifts,
-            COMPAS,
-        ) = find_detection_rate(
-            path=compas_h5_path,
-            dco_type="BBH",
-            merger_output_filename=None,
-            weight_column=None,
-            merges_hubble_time=True,
-            pessimistic_CEE=True,
-            no_RLOF_after_CEE=True,
-            max_redshift=10.0,
-            max_redshift_detection=max(Z_RANGE),
-            redshift_step=0.001,
-            z_first_SF=10,
-            use_sampled_mass_ranges=True,
-            m1_min=5 * units.Msun,
-            m1_max=150 * units.Msun,
-            m2_min=0.1 * units.Msun,
-            fbin=0.7,
-            aSF=SF[0],
-            bSF=SF[1],
-            cSF=SF[2],
-            dSF=SF[3],
-            mu0=0.035,
-            muz=muz,
-            sigma0=sigma0,
-            sigmaz=0.0,
-            alpha=0.0,
-            min_logZ=-12.0,
-            max_logZ=0.0,
-            step_logZ=0.01,
-            sensitivity="O1",
-            snr_threshold=8,
-            Mc_max=300.0,
-            Mc_step=0.1,
-            eta_max=0.25,
-            eta_step=0.01,
-            snr_max=1000.0,
-            snr_step=0.1,
+        logger.debug(
+            f"Post-processing {compas_h5_path} with SF={SF}, muz={muz}, sigma0={sigma0}"
         )
-        runtime = time.time() - start_time
+
+        trap = io.StringIO()
+        with redirect_stdout(trap):
+            start_time = time.time()
+            (
+                detection_rate,
+                formation_rate,
+                merger_rate,
+                redshifts,
+                COMPAS,
+            ) = find_detection_rate(
+                path=compas_h5_path,
+                dco_type="BBH",
+                merger_output_filename=None,
+                weight_column=None,
+                merges_hubble_time=True,
+                pessimistic_CEE=True,
+                no_RLOF_after_CEE=True,
+                max_redshift=10.0,
+                max_redshift_detection=max(Z_RANGE),
+                redshift_step=0.001,
+                z_first_SF=10,
+                use_sampled_mass_ranges=True,
+                m1_min=5 * units.Msun,
+                m1_max=150 * units.Msun,
+                m2_min=0.1 * units.Msun,
+                fbin=0.7,
+                aSF=SF[0],
+                bSF=SF[1],
+                cSF=SF[2],
+                dSF=SF[3],
+                mu0=0.035,
+                muz=muz,
+                sigma0=sigma0,
+                sigmaz=0.0,
+                alpha=0.0,
+                min_logZ=-12.0,
+                max_logZ=0.0,
+                step_logZ=0.01,
+                sensitivity="O1",
+                snr_threshold=8,
+                Mc_max=300.0,
+                Mc_step=0.1,
+                eta_max=0.25,
+                eta_step=0.01,
+                snr_max=1000.0,
+                snr_step=0.1,
+            )
+            runtime = time.time() - start_time
 
         sorted_idx = np.argsort(COMPAS.mChirp)
         chirp_masses = COMPAS.mChirp[sorted_idx]
@@ -130,9 +137,8 @@ class Universe:
             sigma0=sigma0,
         )
 
-        print(f"Time taken for CI: {runtime:.2f} s")
-        print(
-            f"{uni.n_systems} simulated systems in {uni.detection_rate.shape} bins"
+        logger.debug(
+            f"{uni.n_systems} simulated systems in {uni.detection_rate.shape} bins, completed in {runtime:.2f} s"
         )
         return uni
 
@@ -161,7 +167,7 @@ class Universe:
     def plot_detection_rate_matrix(
         self, save=True, outdir=".", smoothed_2d_data=False
     ):
-
+        os.makedirs(outdir, exist_ok=True)
         title_txt = f"Detection Rate Matrix ({self.n_systems} systems)"
         title_txt += f"\nSF: {', '.join(np.array(self.SF).astype(str))}"
         if self.binned:
@@ -229,6 +235,7 @@ class Universe:
         if save:
             fname = self._get_fname(outdir, extra="det_matrix", ext="png")
             plt.savefig(fname, bbox_inches="tight", pad_inches=0)
+            plt.close(fig)
 
         return fig
 
@@ -267,7 +274,7 @@ class Universe:
             ci_runtime=self.ci_runtime,
             SF=self.SF,
         )
-        print(
+        logger.debug(
             f"Binning data {self.detection_rate.shape} -> {binned_data.shape}"
         )
         return new_uni
@@ -290,19 +297,29 @@ class Universe:
 
         return df
 
-    def save(self, outdir=".") -> str:
+    def save(self, outdir=".", fname="") -> str:
         """Save the Universe object to a npz file, return the filename"""
+        if fname == "":
+            fname = self._get_fname(outdir)
+
+        if outdir == "." and os.path.dirname(fname) != "":
+            outdir = os.path.dirname(fname)
+
+        if outdir != ".":
+            os.makedirs(outdir, exist_ok=True)
+
         data = {k: np.asarray(v) for k, v in self.__dict__().items()}
-        fname = self._get_fname(outdir)
+
         np.savez(fname, **data)
         return fname
 
     @property
     def label(self):
         num = self.n_systems
-        sf = "_".join(np.array(self.SF).astype(str))
-
-        label = f"uni_n{num}_sf_{sf}"
+        sf = "sf_" + "_".join(np.array(self.SF).astype(str))
+        muz = f"muz_{self.muz}"
+        sigma0 = f"sigma0_{self.sigma0}"
+        label = f"uni_n{num}_{sf}_{muz}_{sigma0}"
         if self.binned:
             label = f"binned_{label}"
         return label
@@ -322,7 +339,7 @@ class Universe:
             SF=self.SF,
         )
 
-    def sample_observations(self, n_obs: int = None):
+    def sample_observations(self, n_obs: int = None) -> np.ndarray:
         if n_obs is None:
             n_obs = self.n_detections()
         df = self.get_detection_rate_dataframe()
@@ -330,7 +347,9 @@ class Universe:
         n_events = df.sample(weights=df.rate, n=n_obs)
         return n_events[["mc", "z"]].values
 
-    def sample_possible_event_matrix(self, n_obs: int = None):
+    def sample_possible_event_matrix(
+        self, n_obs: int = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Make a fake detection matrix with the same shape as the universe"""
         # FIXME: draw from the detection rate distribution using poisson distributions
         if n_obs is None:
@@ -401,12 +420,13 @@ def bin_data2d(data2d, data1d, bins, axis=0):
 
 if __name__ == "__main__":
     PATH = "/Users/avaj0001/Documents/projects/compas_dev/quasir_compass_blocks/data/COMPAS_Output.h5"
-    from tqdm.auto import tqdm
 
-    uni_file = "uni.npz"
-    if not os.path.exists(uni_file):
+    clean = True
+    outdir = "out"
+    uni_file = f"{outdir}/uni.npz"
+    if not os.path.exists(uni_file) or clean:
         uni = Universe.simulate(PATH, SF=[0.01, 2.77, 2.90, 4.70])
-        uni.save(outdir="out")
+        uni.save(fname=uni_file)
     uni = Universe.from_npz(uni_file)
     uni_binned = uni.bin_detection_rate()
     fig = uni_binned.plot_detection_rate_matrix(outdir="out")
