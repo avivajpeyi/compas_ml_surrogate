@@ -1,10 +1,8 @@
 import os
-from functools import cache
 
 from compas_surrogate.data_generation import generate_set_of_matricies
 
 
-@cache
 def get_compas_output_fname():
     LARGEFILE_PATH = "/home/compas-data/h5out_5M.h5"
     SMALLFILE_PATH = "../../quasir_compass_blocks/data/COMPAS_Output.h5"
