@@ -18,7 +18,7 @@ def get_compas_output_fname():
     return testfile
 
 
-def main():
+def main_investigate():
     kwgs = dict(
         n=15, save_images=True, compas_h5_path=get_compas_output_fname()
     )
@@ -41,6 +41,16 @@ def main():
         outdir="out_sig",
         parameters=["sigma0"],
         **kwgs,
+    )
+
+
+def main():
+    generate_set_of_matricies(
+        n=50000,
+        save_images=False,
+        compas_h5_path=get_compas_output_fname(),
+        outdir="out_muz_sigma0",
+        parameters=["muz", "sigma0"],
     )
 
 
