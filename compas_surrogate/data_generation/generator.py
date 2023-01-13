@@ -57,6 +57,15 @@ def generate_gifs(outdir="."):
 def generate_set_of_matricies(
     compas_h5_path, n=50, save_images=True, outdir=".", parameters=None
 ):
+    """
+    Generate a set of COMPAS detection rate matricies
+    :param compas_h5_path: Path to COMPAS h5 file
+    :param n: number of matricies to generate
+    :param save_images: save images of the matricies
+    :param outdir: dir to save data and images
+    :param parameters: parameters to draw from for matrix [aSF, dSF, muz, sigma0]
+    :return:
+    """
     if parameters == None:
         parameters = ["aSF", "dSF", "muz", "sigma0"]
 

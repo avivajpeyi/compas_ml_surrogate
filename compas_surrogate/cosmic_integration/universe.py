@@ -22,6 +22,28 @@ Z_RANGE = [0, 0.6]
 O2_DURATION = 0.5  # in yrs
 
 
+class MockPopulation:
+    def __init__(self, rate2d, mcz, universe):
+        self.rate2d = rate2d
+        self.mcz = mcz
+        self.universe = universe
+
+    def plot(self, save=True, outdir="."):
+        fig = self.universe.plot_detection_rate_matrix(
+            save=False, titles=False
+        )
+        axes = fig.get_axes()
+        axes[0].scatter(
+            self.mcz[:, 1], self.mcz[:, 0], s=100, c="skyblue", marker="*"
+        )
+        uni_fname = self.universe._get_fname(
+            outdir, extra="mock_events", ext="png"
+        )
+        if save:
+            fig.savefig(uni_fname)
+        return fig
+
+
 class Universe:
     def __init__(
         self,
@@ -160,16 +182,23 @@ class Universe:
             "redshifts",
             "chirp_masses",
             "SF",
+            "muz",
+            "sigma0",
         ]
-        data = {k: data[k] for k in valid_keys}
-        return cls(**data)
+        data = {k: data.get(k, None) for k in valid_keys}
+        uni = cls(**data)
+        logger.debug(f"Loaded cached uni with: {uni.param_str()}")
+        return uni
+
+    def param_str(self):
+        sf = ",".join([f"{s:.2f}" for s in self.SF])
+        return f"SF={sf}, muz={self.muz:.2e}, sigma0={self.sigma0:.2e}"
 
     def plot_detection_rate_matrix(
-        self, save=True, outdir=".", smoothed_2d_data=False
+        self, save=True, outdir=".", smoothed_2d_data=False, titles=True
     ):
         os.makedirs(outdir, exist_ok=True)
-        title_txt = f"Detection Rate Matrix ({self.n_systems} systems)"
-        title_txt += f"\nSF: {', '.join(np.array(self.SF).astype(str))}"
+        title_txt = f"Detection Rate Matrix ({self.n_systems} systems)\n"
         if self.binned:
             title_txt = "Binned " + title_txt
         if smoothed_2d_data:
@@ -203,13 +232,13 @@ class Universe:
             extent=self.zmc_extents,
         )
 
-        fig.suptitle(title_txt)
+        if titles:
+            fig.suptitle(title_txt)
+            ax_top.set_title(self.param_str(), fontsize=7)
         ax_2d.set_xlabel("Redshift")
         ax_2d.set_ylabel("Chirp mass")
         ax_2d.set_facecolor("black")
-        annote = (
-            f"Grid: {rate2d.shape}\nN det: {self.n_detections(duration=1)}/yr"
-        )
+        annote = f"Grid: {rate2d.T.shape}\nN det: {self.n_detections(duration=1)}/yr"
         ax_2d.annotate(
             annote,
             xy=(1, 0),
@@ -220,8 +249,17 @@ class Universe:
             va="bottom",
             color="white",
         )
-        ax_right.plot(self.chirp_mass_rate, self.chirp_masses, color="red")
-        ax_top.plot(self.redshifts, self.redshift_rate, color="red")
+        kwgs = dict(color="red", lw=1)
+        ax_right.step(
+            self.chirp_mass_rate,
+            self.chirp_masses,
+            **kwgs,
+        )
+        ax_top.step(
+            self.redshifts,
+            self.redshift_rate,
+            **kwgs,
+        )
         ax_right.axis("off")
         ax_top.axis("off")
 
@@ -230,7 +268,9 @@ class Universe:
         ax_top.set_xlim(*Z_RANGE)
         ax_2d.set_xlim(*Z_RANGE)
 
-        plt.tight_layout()
+        # remove space between subplots
+
+        fig.subplots_adjust(hspace=0, wspace=0)
 
         if save:
             fname = self._get_fname(outdir, extra="det_matrix", ext="png")
@@ -273,6 +313,8 @@ class Universe:
             binned=True,
             ci_runtime=self.ci_runtime,
             SF=self.SF,
+            muz=self.muz,
+            sigma0=self.sigma0,
         )
         logger.debug(
             f"Binning data {self.detection_rate.shape} -> {binned_data.shape}"
@@ -337,7 +379,12 @@ class Universe:
             redshifts=self.redshifts,
             chirp_masses=self.chirp_masses,
             SF=self.SF,
+            muz=self.muz,
+            sigma0=self.sigma0,
         )
+
+    def __repr__(self):
+        return f"<Universe: [{self.n_systems} systems], {self.param_str()}>"
 
     def sample_observations(self, n_obs: int = None) -> np.ndarray:
         if n_obs is None:
@@ -349,7 +396,7 @@ class Universe:
 
     def sample_possible_event_matrix(
         self, n_obs: int = None
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> MockPopulation:
         """Make a fake detection matrix with the same shape as the universe"""
         # FIXME: draw from the detection rate distribution using poisson distributions
         if n_obs is None:
@@ -359,7 +406,8 @@ class Universe:
         for mc, z in event_mcz:
             mc_bin, z_bin = self.get_matrix_bin_idx(mc, z)
             rate2d[mc_bin, z_bin] += 1
-        return rate2d, event_mcz
+
+        return MockPopulation(rate2d=rate2d, mcz=event_mcz, universe=self)
 
     def get_matrix_bin_idx(self, mc, z):
         mc_bin = np.argmin(np.abs(self.chirp_masses - mc))
@@ -369,27 +417,6 @@ class Universe:
     def prob_of_mcz(self, mc, z):
         mc_bin, z_bin = self.get_matrix_bin_idx(mc, z)
         return self.detection_rate[mc_bin, z_bin] / self.n_detections()
-
-
-def plot_event_matrix_on_universe_detection_matrix(
-    universe: Universe, true_rate2d: np.ndarray = None
-):
-    """Plot the fake detection matrix"""
-    if true_rate2d is None:
-        true_rate2d._ = universe.sample_possible_event_matrix()
-
-    universe.plot_detection_rate_matrix()
-    fig = plt.gcf()
-    axes = fig.get_axes()
-    axes[0].imshow(
-        true_rate2d,
-        origin="lower",
-        extent=universe.zmc_extents,
-        aspect="auto",
-        cmap="tab10",
-        alpha=1.0 * (true_rate2d > 0),
-    )
-    return fig
 
 
 def bin_data2d(data2d, data1d, bins, axis=0):
@@ -420,13 +447,14 @@ def bin_data2d(data2d, data1d, bins, axis=0):
 
 if __name__ == "__main__":
     PATH = "/Users/avaj0001/Documents/projects/compas_dev/quasir_compass_blocks/data/COMPAS_Output.h5"
-
     clean = True
     outdir = "out"
     uni_file = f"{outdir}/uni.npz"
     if not os.path.exists(uni_file) or clean:
-        uni = Universe.simulate(PATH, SF=[0.01, 2.77, 2.90, 4.70])
-        uni.save(fname=uni_file)
-    uni = Universe.from_npz(uni_file)
-    uni_binned = uni.bin_detection_rate()
-    fig = uni_binned.plot_detection_rate_matrix(outdir="out")
+        uni = Universe.simulate(PATH, SF=[0.01, 2.77, 2.90, 4.70], muz=-0.3)
+        uni_binned = uni.bin_detection_rate()
+        uni_binned.save(fname=uni_file)
+    uni_binned = Universe.from_npz(uni_file)
+    uni_binned.plot_detection_rate_matrix(outdir=outdir)
+    mock_pop = uni_binned.sample_possible_event_matrix()
+    mock_pop.plot(outdir=outdir)

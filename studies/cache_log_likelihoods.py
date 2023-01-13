@@ -4,10 +4,7 @@ from glob import glob
 import matplotlib.pyplot as plt
 import numpy as np
 
-from compas_surrogate.cosmic_integration.universe import (
-    Universe,
-    plot_event_matrix_on_universe_detection_matrix,
-)
+from compas_surrogate.cosmic_integration.universe import Universe
 from compas_surrogate.liklelihood import ln_likelihood
 
 OUTDIR = "out_universe"
@@ -56,16 +53,14 @@ def main():
 
     # load a set of universes and choose a "true" universe
     observed_uni = universes[5]
-    true_events, true_mcz = observed_uni.sample_possible_event_matrix()
-    fig = plot_event_matrix_on_universe_detection_matrix(
-        observed_uni, true_rate2d=true_events
-    )
+    mock_population = observed_uni.sample_possible_event_matrix()
+    fig = mock_population.plot()
     fig.savefig(os.path.join(OUTDIR, "true_events.png"))
 
     lnl_list = np.array(
         [
             ln_likelihood(
-                mcz_obs=true_mcz,
+                mcz_obs=mock_population.mcz,
                 model_prob_func=uni.prob_of_mcz,
                 n_model=uni.n_detections(),
                 detailed=True,

@@ -16,16 +16,29 @@ def get_compas_output_fname():
     return testfile
 
 
-OUTDIR = "out_universe_muz"
-
-
 def main():
+    kwgs = dict(
+        n=15, save_images=True, compas_h5_path=get_compas_output_fname()
+    )
     generate_set_of_matricies(
-        n=5,
-        save_images=True,
-        outdir=OUTDIR,
-        compas_h5_path=get_compas_output_fname(),
+        outdir="out_asf",
+        parameters=["aSF"],
+        **kwgs,
+    )
+    generate_set_of_matricies(
+        outdir="out_dsf",
+        parameters=["dSF"],
+        **kwgs,
+    )
+    generate_set_of_matricies(
+        outdir="out_muz",
         parameters=["muz"],
+        **kwgs,
+    )
+    generate_set_of_matricies(
+        outdir="out_sig",
+        parameters=["sigma0"],
+        **kwgs,
     )
 
 
