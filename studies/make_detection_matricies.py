@@ -4,13 +4,17 @@ from compas_surrogate.data_generation import generate_set_of_matricies
 
 
 def get_compas_output_fname():
-    LARGEFILE_PATH = "/home/compas-data/h5out_5M.h5"
-    SMALLFILE_PATH = "../../quasir_compass_blocks/data/COMPAS_Output.h5"
-
-    if os.path.exists(LARGEFILE_PATH):
-        testfile = LARGEFILE_PATH
+    COMPAS_PC = "/home/compas-data/h5out_5M.h5"
+    LOCAL_PC = "../../quasir_compass_blocks/data/COMPAS_Output.h5"
+    OZSTAR = (
+        "/fred/oz980/avajpeyi/projects/compas_dev/data/Z_all/COMPAS_Output.h5"
+    )
+    if os.path.exists(COMPAS_PC):
+        testfile = COMPAS_PC
+    elif os.path.exists(OZSTAR):
+        testfile = OZSTAR
     else:
-        testfile = SMALLFILE_PATH
+        testfile = LOCAL_PC
     return testfile
 
 
