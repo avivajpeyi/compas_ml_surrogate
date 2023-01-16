@@ -2,7 +2,6 @@
 
 import glob
 import os
-from multiprocessing import cpu_count
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,6 +13,7 @@ from compas_surrogate.cosmic_integration.star_formation_paramters import (
 from compas_surrogate.cosmic_integration.universe import Universe
 from compas_surrogate.logger import logger
 from compas_surrogate.plotting.gif_generator import make_gif
+from compas_surrogate.utils import get_num_workers
 
 
 def generate_matrix(compas_h5_path, sf_sample, save_images=False, outdir="."):
@@ -28,15 +28,6 @@ def generate_matrix(compas_h5_path, sf_sample, save_images=False, outdir="."):
     if save_images:
         uni.plot_detection_rate_matrix(outdir=outdir)
         binned_uni.plot_detection_rate_matrix(outdir=outdir)
-
-
-def get_num_workers():
-    num_workers = cpu_count()
-    if num_workers > 64:
-        num_workers = 16
-    elif num_workers < 16:
-        num_workers = 4
-    return num_workers
 
 
 def generate_gifs(outdir="."):

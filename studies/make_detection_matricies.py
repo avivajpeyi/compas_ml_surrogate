@@ -46,7 +46,7 @@ def main_investigate():
 
 def main():
     generate_set_of_matricies(
-        n=50000,
+        n=10,
         save_images=False,
         compas_h5_path=get_compas_output_fname(),
         outdir="out_muz_sigma0",

@@ -1,8 +1,10 @@
+from multiprocessing import cpu_count
+
 import requests
 from tqdm.auto import tqdm
 
 
-def download_file(url: str, filename: str) -> None:
+def download_file(url: str, filename: str) -> str:
     """
     Download a file from a given url and save it to a given filename.
     :param url: download URL
@@ -22,3 +24,12 @@ def download_file(url: str, filename: str) -> None:
                 pbar.update(len(chunk))
                 f.write(chunk)
     return filename
+
+
+def get_num_workers():
+    num_workers = cpu_count()
+    if num_workers > 64:
+        num_workers = 16
+    elif num_workers < 16:
+        num_workers = 4
+    return num_workers

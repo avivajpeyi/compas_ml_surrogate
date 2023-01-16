@@ -194,6 +194,9 @@ class Universe:
         sf = ",".join([f"{s:.2f}" for s in self.SF])
         return f"SF={sf}, muz={self.muz:.2e}, sigma0={self.sigma0:.2e}"
 
+    def param_list(self):
+        return np.array([*self.SF, self.muz, self.sigma0]).flatten()
+
     def plot_detection_rate_matrix(
         self, save=True, outdir=".", smoothed_2d_data=False, titles=True
     ):
