@@ -2,7 +2,6 @@ import random
 from glob import glob
 
 import matplotlib.pyplot as plt
-import regex as re
 from tqdm.auto import tqdm
 
 from compas_surrogate.cosmic_integration.universe import Universe
@@ -46,6 +45,8 @@ def get_params_from_universe_paths(path):
     """
     Extract the parameters from the universe path.
     """
+    import regex as re
+
     param_names = ["n", "aSF", "bSF", "cSF", "dSF", "muz", "", "sigma0"]
     params = re.findall(r"[-+]?\d*\.\d+|\d+", path)
     param_vals = {
