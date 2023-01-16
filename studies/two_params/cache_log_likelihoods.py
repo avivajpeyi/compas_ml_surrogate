@@ -1,3 +1,4 @@
+import random
 from glob import glob
 
 import matplotlib.pyplot as plt
@@ -32,7 +33,8 @@ def plot_2d_density(x, y, z, true_x=None, true_y=None):
 
 def main(universes_glob=GLOB_STR, cache_lnl_file=CACHE_LNL_FILE):
     universe_paths = glob(universes_glob)
-    observed_uni = Universe.from_npz(universe_paths[0])
+    random_uni = random.choice(universe_paths)
+    observed_uni = Universe.from_npz(random_uni)
     mock_population = observed_uni.sample_possible_event_matrix()
     compute_and_cache_lnl(mock_population, universe_paths, cache_lnl_file)
 
@@ -41,8 +43,8 @@ def main(universes_glob=GLOB_STR, cache_lnl_file=CACHE_LNL_FILE):
         data_dict["muz"],
         data_dict["sigma0"],
         data_dict["lnl"],
-        true_x=mock_population.muz,
-        true_y=mock_population.sigma0,
+        true_x=data_dict["true_params"]["muz"],
+        true_y=data_dict["true_params"]["sigma0"],
     )
 
 
