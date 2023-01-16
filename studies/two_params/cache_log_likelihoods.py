@@ -2,6 +2,8 @@ import random
 from glob import glob
 
 import matplotlib.pyplot as plt
+import regex as re
+from tqdm.auto import tqdm
 
 from compas_surrogate.cosmic_integration.universe import Universe
 from compas_surrogate.data_generation.likelihood_cacher import (
@@ -11,6 +13,8 @@ from compas_surrogate.data_generation.likelihood_cacher import (
 
 OUTDIR = "../out_muz_sigma0"
 GLOB_STR = f"{OUTDIR}/*.npz"
+
+DESIRED_UNI = f"{OUTDIR}/binned_uni_n11735_sf_0.01_2.77_2.9_4.7_muz_-0.3005152571022276_sigma0_0.468535329099279.npz"
 
 CACHE_LNL_FILE = "cache_lnl.npz"
 
@@ -38,10 +42,25 @@ def plot_2d_density(x, y, z, true_x=None, true_y=None, scatter=False):
     fig.savefig("lnl_2d_density" + "_scatter" * scatter + ".png")
 
 
+def get_params_from_universe_paths(path):
+    """
+    Extract the parameters from the universe path.
+    """
+    param_names = ["n", "aSF", "bSF", "cSF", "dSF", "muz", "", "sigma0"]
+    params = re.findall(r"[-+]?\d*\.\d+|\d+", path)
+    param_vals = {
+        name: float(param) for name, param in zip(param_names, params)
+    }
+    param_vals.pop("")
+    return param_vals
+
+
 def main(universes_glob=GLOB_STR, cache_lnl_file=CACHE_LNL_FILE):
     universe_paths = glob(universes_glob)
-    random_uni = random.choice(universe_paths)
-    observed_uni = Universe.from_npz(random_uni)
+    uni_path = random.choice(universe_paths)
+    if DESIRED_UNI in universe_paths:
+        uni_path = DESIRED_UNI
+    observed_uni = Universe.from_npz(uni_path)
     mock_population = observed_uni.sample_possible_event_matrix()
     mock_population.plot(save=True)
     compute_and_cache_lnl(mock_population, universe_paths, cache_lnl_file)
