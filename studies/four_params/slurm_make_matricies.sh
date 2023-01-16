@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=6
 #SBATCH --time=24:00:00
-#SBATCH --mem-per-cpu=2GB
+#SBATCH --mem-per-cpu=24GB
 #SBATCH --output=log_det_matrix_%j.out
 #SBATCH --dependency=singleton
 
