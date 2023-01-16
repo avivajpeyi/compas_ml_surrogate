@@ -38,6 +38,7 @@ def compute_and_cache_lnl(
         [mock_population.mcz] * n,
         desc="Computing likelihoods",
         max_workers=get_num_workers(),
+        chunksize=100,
     )
 
     lnl_and_param_list = np.array(lnl_and_param_list)
@@ -63,7 +64,9 @@ def load_lnl_cache(npz_path: str) -> Dict[str, np.ndarray]:
     )
     df = pd.DataFrame(data_dict)
     init_len = len(df)
+    df = df.replace([np.inf, -np.inf], np.nan)
     df = df.dropna()
+
     logger.info(f"Loaded {npz_path} --> {len(df)}/{init_len} non-nan rows")
     data_dict = df.to_dict("list")
 
