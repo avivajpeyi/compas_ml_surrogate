@@ -72,7 +72,9 @@ def generate_set_of_matricies(
     )
 
     args = ([compas_h5_path] * n, sf_samples, [save_images] * n, [outdir] * n)
-    process_map(generate_matrix, *args, max_workers=get_num_workers())
+    process_map(
+        generate_matrix, *args, max_workers=get_num_workers(), chunksize=100
+    )
 
     if save_images:
         logger.info("Making GIFs")
