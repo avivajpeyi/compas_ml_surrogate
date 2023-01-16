@@ -27,6 +27,12 @@ class MockPopulation:
         self.rate2d = rate2d
         self.mcz = mcz
         self.universe = universe
+        self.muz = universe.muz
+        self.sigma0 = universe.sigma0
+        self.aSF = universe.SF[0]
+        self.bSF = universe.SF[1]
+        self.cSF = universe.SF[2]
+        self.dSF = universe.SF[3]
 
     def plot(self, save=True, outdir="."):
         fig = self.universe.plot_detection_rate_matrix(
@@ -42,6 +48,9 @@ class MockPopulation:
         if save:
             fig.savefig(uni_fname)
         return fig
+
+    def param_list(self):
+        return self.universe.param_list()
 
 
 class Universe:

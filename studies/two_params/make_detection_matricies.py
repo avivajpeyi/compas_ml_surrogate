@@ -5,7 +5,7 @@ from compas_surrogate.data_generation import generate_set_of_matricies
 
 def get_compas_output_fname():
     COMPAS_PC = "/home/compas-data/h5out_5M.h5"
-    LOCAL_PC = "../../quasir_compass_blocks/data/COMPAS_Output.h5"
+    LOCAL_PC = "../../../quasir_compass_blocks/data/COMPAS_Output.h5"
     OZSTAR = (
         "/fred/oz980/avajpeyi/projects/compas_dev/data/Z_all/COMPAS_Output.h5"
     )

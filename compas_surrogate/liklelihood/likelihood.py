@@ -14,7 +14,7 @@ def ln_poisson_likelihood(
     :param ignore_factorial: ignore the factorial term in the likelihood
     :return: the log likelihood
     """
-    if n_model < 0:
+    if n_model <= 0:
         return -np.inf
     lnl = n_obs * np.log(n_model) - n_model
 

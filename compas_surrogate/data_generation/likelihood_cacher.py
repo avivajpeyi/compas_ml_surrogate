@@ -1,6 +1,7 @@
-from typing import List
+from typing import Dict, List
 
 import numpy as np
+import pandas as pd
 from tqdm.contrib.concurrent import process_map
 
 from compas_surrogate.cosmic_integration.universe import (
@@ -44,5 +45,30 @@ def compute_and_cache_lnl(
         cache_lnl_file,
         lnl=lnl_and_param_list[:, 0],
         params=lnl_and_param_list[:, 1:],
+        true_params=mock_population.param_list(),
     )
     logger.success(f"Saved {cache_lnl_file}")
+
+
+def load_lnl_cache(npz_path: str) -> Dict[str, np.ndarray]:
+    data = np.load(npz_path)
+    data_dict = dict(
+        aSF=data["params"][:, 0],
+        bSF=data["params"][:, 1],
+        cSF=data["params"][:, 2],
+        dSF=data["params"][:, 3],
+        muz=data["params"][:, 4],
+        sigma0=data["params"][:, 5],
+        lnl=data["lnl"],
+    )
+    df = pd.DataFrame(data_dict)
+    init_len = len(df)
+    df = df.dropna()
+    logger.info(f"Loaded {npz_path} --> {len(df)}/{init_len} non-nan rows")
+    data_dict = df.to_dict("list")
+
+    param_names = ["aSF", "bSF", "cSF", "dSF", "muz", "sigma0"]
+    data_dict["true_params"] = {
+        p: data["true_params"][i] for i, p in enumerate(param_names)
+    }
+    return data_dict
