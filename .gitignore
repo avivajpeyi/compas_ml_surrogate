@@ -24,6 +24,7 @@ out_*
 *.out
 *.toc
 *.fmt
+*.h5
 *.fot
 *.cb
 *.cb2

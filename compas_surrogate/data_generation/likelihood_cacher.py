@@ -21,7 +21,7 @@ def _get_lnl_and_param(uni_fn, observed_mcz):
         n_model=uni.n_detections(),
         detailed=False,
     )
-    params = uni.param_list()
+    params = uni.param_list
     logger.debug(f"Processed {uni_fn} with lnl={lnl} and params={params}")
     return np.array([lnl, *params])
 
@@ -46,7 +46,7 @@ def compute_and_cache_lnl(
         cache_lnl_file,
         lnl=lnl_and_param_list[:, 0],
         params=lnl_and_param_list[:, 1:],
-        true_params=mock_population.param_list(),
+        true_params=mock_population.param_list,
     )
     logger.success(f"Saved {cache_lnl_file}")
 

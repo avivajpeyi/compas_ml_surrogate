@@ -3,8 +3,8 @@
 import glob
 import os
 
-import matplotlib.pyplot as plt
-import numpy as np
+import h5py
+from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from compas_surrogate.cosmic_integration.star_formation_paramters import (
@@ -79,3 +79,35 @@ def generate_set_of_matricies(
     if save_images:
         logger.info("Making GIFs")
         generate_gifs(outdir=outdir)
+
+
+def compile_matricies_into_hdf(
+    npz_regex, fname="detection_matricies.h5"
+) -> None:
+    """
+    Compile a set of COMPAS detection rate matricies into a single hdf file
+    :param npz_paths: list of paths to npz files
+    :param fname: name of output file
+    :return: None
+    """
+    npz_files = glob.glob(npz_regex)
+    n = len(npz_files)
+    logger.info(f"Compiling {n} matricies into hdf file --> {fname}")
+
+    base_uni = Universe.from_npz(npz_files[0])
+
+    with h5py.File(fname, "w") as f:
+        f.attrs["compas_h5_path"] = str(base_uni.compas_h5_path)
+        f.attrs["n_systems"] = base_uni.n_systems
+        f.attrs["redshifts"] = base_uni.redshifts
+        f.attrs["chirp_masses"] = base_uni.chirp_masses
+        f.attrs["parameter_labels"] = base_uni.param_names
+        f.create_dataset(
+            "detection_matricies", (n, *base_uni.detection_rate.shape)
+        )
+        f.create_dataset("parameters", (n, *base_uni.param_list.shape))
+        for i in tqdm(range(n), "Writing matricies to hdf file"):
+            uni = Universe.from_npz(npz_files[i])
+            f["detection_matricies"][i, :, :] = uni.detection_rate
+            f["parameters"][i, :] = uni.param_list
+        f.close()

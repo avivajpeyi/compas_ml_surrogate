@@ -50,7 +50,7 @@ class MockPopulation:
         return fig
 
     def param_list(self):
-        return self.universe.param_list()
+        return self.universe.param_list
 
 
 class Universe:
@@ -196,15 +196,21 @@ class Universe:
         ]
         data = {k: data.get(k, None) for k in valid_keys}
         uni = cls(**data)
-        logger.debug(f"Loaded cached uni with: {uni.param_str()}")
+        logger.debug(f"Loaded cached uni with: {uni.param_str}")
         return uni
 
+    @property
     def param_str(self):
         sf = ",".join([f"{s:.2f}" for s in self.SF])
         return f"SF={sf}, muz={self.muz:.2e}, sigma0={self.sigma0:.2e}"
 
+    @property
     def param_list(self):
         return np.array([*self.SF, self.muz, self.sigma0]).flatten()
+
+    @property
+    def param_names(self):
+        return ["aSF", "bSF", "cSF", "dSF", "muz", "sigma0"]
 
     def plot_detection_rate_matrix(
         self, save=True, outdir=".", smoothed_2d_data=False, titles=True
@@ -246,7 +252,7 @@ class Universe:
 
         if titles:
             fig.suptitle(title_txt)
-            ax_top.set_title(self.param_str(), fontsize=7)
+            ax_top.set_title(self.param_str, fontsize=7)
         ax_2d.set_xlabel("Redshift")
         ax_2d.set_ylabel("Chirp mass")
         ax_2d.set_facecolor("black")
@@ -396,7 +402,7 @@ class Universe:
         )
 
     def __repr__(self):
-        return f"<Universe: [{self.n_systems} systems], {self.param_str()}>"
+        return f"<Universe: [{self.n_systems} systems], {self.param_str}>"
 
     def sample_observations(self, n_obs: int = None) -> np.ndarray:
         if n_obs is None:
