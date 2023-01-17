@@ -1,7 +1,9 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+import h5py
 import numpy as np
 import pandas as pd
+from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from compas_surrogate.cosmic_integration.universe import (
@@ -13,33 +15,59 @@ from compas_surrogate.logger import logger
 from compas_surrogate.utils import get_num_workers
 
 
-def _get_lnl_and_param(uni_fn, observed_mcz):
-    uni = Universe.from_npz(uni_fn)
+def _get_lnl_and_param_uni(uni: Universe, observed_mcz: np.ndarray):
     lnl = ln_likelihood(
         mcz_obs=observed_mcz,
         model_prob_func=uni.prob_of_mcz,
         n_model=uni.n_detections(),
         detailed=False,
     )
-    params = uni.param_list
-    logger.debug(f"Processed {uni_fn} with lnl={lnl} and params={params}")
-    return np.array([lnl, *params])
+    logger.debug(f"Processed {uni} lnl={lnl}.")
+    return np.array([lnl, *uni.param_list])
+
+
+def _get_lnl_and_param_from_npz(npz_fn: str, observed_mcz: np.ndarray):
+    uni = Universe.from_npz(npz_fn)
+    return _get_lnl_and_param_uni(uni, observed_mcz)
+
+
+def _get_lnl_and_param_from_h5(
+    h5_file: h5py.File, idx: int, observed_mcz: np.ndarray
+):
+    uni = Universe.from_hdf5(h5_file, idx)
+    return _get_lnl_and_param_uni(uni, observed_mcz)
 
 
 def compute_and_cache_lnl(
-    mock_population: MockPopulation, universe_paths: List, cache_lnl_file: str
+    mock_population: MockPopulation,
+    cache_lnl_file: str,
+    hf5_path: Optional[str] = "",
+    universe_paths: Optional[List] = None,
 ):
-    n = len(universe_paths)
-    logger.info(f"Starting LnL computation for {n} universes")
-
-    lnl_and_param_list = process_map(
-        _get_lnl_and_param,
-        universe_paths,
-        [mock_population.mcz] * n,
-        desc="Computing likelihoods",
-        max_workers=get_num_workers(),
-        chunksize=100,
-    )
+    if universe_paths is not None:
+        n = len(universe_paths)
+        logger.info(f"Starting LnL computation for {n} universes")
+        lnl_and_param_list = process_map(
+            _get_lnl_and_param_from_npz,
+            universe_paths,
+            [mock_population.mcz] * n,
+            desc="Computing likelihoods",
+            max_workers=get_num_workers(),
+            chunksize=100,
+        )
+    elif hf5_path is not None:
+        f = h5py.File(hf5_path, "r")
+        n = len(f["parameters"])
+        logger.info(f"Starting LnL computation for {n} universes")
+        lnl_and_param_list = [
+            _get_lnl_and_param_from_h5(f, i, mock_population.mcz)
+            for i in tqdm(
+                range(n),
+                desc="Computing likelihoods",
+            )
+        ]
+    else:
+        raise ValueError("Must provide either hf5_path or universe_paths")
 
     lnl_and_param_list = np.array(lnl_and_param_list)
     np.savez(

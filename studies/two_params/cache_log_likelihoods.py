@@ -64,7 +64,9 @@ def main(universes_glob=GLOB_STR, cache_lnl_file=CACHE_LNL_FILE):
     observed_uni = Universe.from_npz(uni_path)
     mock_population = observed_uni.sample_possible_event_matrix()
     mock_population.plot(save=True)
-    compute_and_cache_lnl(mock_population, universe_paths, cache_lnl_file)
+    compute_and_cache_lnl(
+        mock_population, cache_lnl_file, universe_paths=universe_paths
+    )
 
     data_dict = load_lnl_cache("cache_lnl.npz")
     plt_kwgs = dict(
