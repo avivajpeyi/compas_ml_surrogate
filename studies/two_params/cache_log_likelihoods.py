@@ -2,7 +2,6 @@ import random
 from glob import glob
 
 import matplotlib.pyplot as plt
-from tqdm.auto import tqdm
 
 from compas_surrogate.cosmic_integration.universe import Universe
 from compas_surrogate.data_generation.likelihood_cacher import (
