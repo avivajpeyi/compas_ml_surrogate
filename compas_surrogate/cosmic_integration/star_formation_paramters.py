@@ -4,6 +4,15 @@ import numpy as np
 from scipy.stats import qmc
 from scipy.stats.qmc import LatinHypercube
 
+DEFAULT_SF_PARAMETERS = dict(
+    aSF=0.01,
+    bSF=2.77,
+    cSF=2.9,
+    dSF=4.7,
+    muz=-0.23,
+    sigma0=0.39,
+)
+
 STAR_FORMATION_RANGES = dict(
     muz=[-0.5, -0.001],  # Jeff's alpha
     sigma0=[0.1, 0.6],  # Jeff's sigma

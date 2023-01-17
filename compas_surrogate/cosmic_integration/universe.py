@@ -1,10 +1,10 @@
 import io
-import logging
 import os
 import time
 from contextlib import redirect_stdout
-from typing import Optional, Tuple
+from typing import Optional
 
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -14,6 +14,9 @@ from scipy.interpolate import RectBivariateSpline
 
 from compas_surrogate.cosmic_integration.CosmicIntegration import (
     find_detection_rate,
+)
+from compas_surrogate.cosmic_integration.star_formation_paramters import (
+    DEFAULT_SF_PARAMETERS as DEFAULT,
 )
 from compas_surrogate.logger import logger
 
@@ -62,8 +65,8 @@ class Universe:
         redshifts,
         chirp_masses,
         SF,
-        muz=-0.23,
-        sigma0=0.39,
+        muz=DEFAULT["muz"],
+        sigma0=DEFAULT["sigma0"],
         ci_runtime=np.inf,
         binned=False,
     ):
@@ -87,10 +90,21 @@ class Universe:
         return os.path.exists(fname)
 
     @classmethod
-    def simulate(cls, compas_h5_path, SF=None, muz=-0.23, sigma0=0.39):
+    def simulate(
+        cls,
+        compas_h5_path,
+        SF=None,
+        muz=DEFAULT["muz"],
+        sigma0=DEFAULT["sigma0"],
+    ):
         """Create a Universe object from a COMPAS h5 file (run cosmic integrator)"""
         if SF is None:
-            SF = [0.01, 2.77, 2.90, 4.70]
+            SF = [
+                DEFAULT["aSF"],
+                DEFAULT["bSF"],
+                DEFAULT["cSF"],
+                DEFAULT["dSF"],
+            ]
         assert len(SF) == 4, "SF must be a list of length 4"
 
         logger.debug(
@@ -195,6 +209,27 @@ class Universe:
             "sigma0",
         ]
         data = {k: data.get(k, None) for k in valid_keys}
+        uni = cls(**data)
+        logger.debug(f"Loaded cached uni with: {uni.param_str}")
+        return uni
+
+    @classmethod
+    def from_hdf5(cls, h5file: h5py.File, idx: int):
+        """Create a Universe object from a hdf5 file (dont run cosmic integrator)"""
+        data = {}
+        common_keys = [
+            "compas_h5_path",
+            "n_systems",
+            "redshifts",
+            "chirp_masses",
+        ]
+        for key in common_keys:
+            data[key] = h5file.attrs[key]
+        data["detection_rate"] = h5file["detection_rates"][idx]
+        params = h5file["parameters"][idx]
+        data["SF"] = params[:4]
+        data["muz"] = params[4]
+        data["sigma0"] = params[5]
         uni = cls(**data)
         logger.debug(f"Loaded cached uni with: {uni.param_str}")
         return uni
