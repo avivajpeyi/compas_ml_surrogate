@@ -77,5 +77,10 @@ if __name__ == "__main__":
         extras_require=EXTRA_REQUIRE,
         classifiers=CLASSIFIERS,
         zip_safe=True,
-        entry_points={"console_scripts": []},
+        entry_points={
+            "console_scripts": [
+                "make_detection_matrices = compas_surrogate.data_generation.cli:cli_matrix_generation",
+                "compile_matrix_h5 = compas_surrogate.data_generation.cli:cli_compile_matrix_h5",
+            ]
+        },
     )
