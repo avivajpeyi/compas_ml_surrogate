@@ -13,8 +13,6 @@ from compas_surrogate.data_generation.likelihood_cacher import (
 OUTDIR = "../out_muz_sigma0"
 GLOB_STR = f"{OUTDIR}/*.npz"
 
-DESIRED_UNI = f"{OUTDIR}/binned_uni_n11735_sf_0.01_2.77_2.9_4.7_muz_-0.3005152571022276_sigma0_0.468535329099279.npz"
-
 CACHE_LNL_FILE = "cache_lnl.npz"
 
 
@@ -59,8 +57,6 @@ def get_params_from_universe_paths(path):
 def main(universes_glob=GLOB_STR, cache_lnl_file=CACHE_LNL_FILE):
     universe_paths = glob(universes_glob)
     uni_path = random.choice(universe_paths)
-    if DESIRED_UNI in universe_paths:
-        uni_path = DESIRED_UNI
     observed_uni = Universe.from_npz(uni_path)
     mock_population = observed_uni.sample_possible_event_matrix()
     mock_population.plot(save=True)
