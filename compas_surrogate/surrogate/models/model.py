@@ -6,19 +6,19 @@ import numpy as np
 class Model(ABC):
     """Base class for surrogate models."""
 
-    @abstractmethod
     @classmethod
-    def load(cls, path: str) -> "Model":
-        """Load a model from a file."""
+    @abstractmethod
+    def load(cls, savedir: str) -> "Model":
+        """Load a model from a dir."""
         pass
 
     @abstractmethod
-    def save(self, path: str) -> None:
-        """Save a model to a file."""
+    def save(self, savedir: str) -> None:
+        """Save a model to a dir."""
         pass
 
     @abstractmethod
-    def train(self, *args, **kwargs) -> None:
+    def train(self, inputs: np.ndarray, outputs: np.ndarray) -> None:
         """Train the model."""
         pass
 

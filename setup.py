@@ -28,6 +28,8 @@ INSTALL_REQUIRES = [
     "loguru",
     "tqdm",
     "requests",
+    "gpflow",
+    "george",
 ]
 EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [
