@@ -20,7 +20,6 @@ def cli_matrix_generation():
     )
     parser.add_argument(
         "--save_images",
-        type=bool,
         default=False,
         action="store_true",
         help="save images of matricies",

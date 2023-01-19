@@ -1,8 +1,18 @@
+from typing import Dict, List, Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
+from corner import corner
 
 
-def plot_1d_lnl(params, lnl, poisson_lnl=[], mcz_lnl=[], true_param=None):
+def plot_1d_lnl(
+    params: List[float],
+    lnl: List[float],
+    poisson_lnl: List[float] = [],
+    mcz_lnl: List[float] = [],
+    true_param: Optional[float] = None,
+):
+    """Plot 1d Lnl for a given parameter."""
     set_color = lambda x: ["C0" if xi != max(x) else "C1" for xi in x]
 
     n_plots = 1 + len(poisson_lnl) + len(mcz_lnl)

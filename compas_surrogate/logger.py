@@ -1,4 +1,5 @@
 import sys
+import warnings
 
 from loguru import logger
 
@@ -9,3 +10,6 @@ logger.add(
     colorize=True,
     level="INFO",
 )
+
+
+warnings.filterwarnings("ignore", category=RuntimeWarning)

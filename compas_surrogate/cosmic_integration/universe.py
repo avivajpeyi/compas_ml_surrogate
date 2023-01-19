@@ -52,8 +52,12 @@ class MockPopulation:
             fig.savefig(uni_fname)
         return fig
 
-    def param_list(self):
+    @property
+    def param_list(self) -> np.array:
         return self.universe.param_list
+
+    def __repr__(self):
+        return f"MockPopulation({self.universe})"
 
 
 class Universe:
@@ -225,7 +229,7 @@ class Universe:
         ]
         for key in common_keys:
             data[key] = h5file.attrs[key]
-        data["detection_rate"] = h5file["detection_rates"][idx]
+        data["detection_rate"] = h5file["detection_matricies"][idx]
         params = h5file["parameters"][idx]
         data["SF"] = params[:4]
         data["muz"] = params[4]
@@ -240,7 +244,7 @@ class Universe:
         return f"SF={sf}, muz={self.muz:.2e}, sigma0={self.sigma0:.2e}"
 
     @property
-    def param_list(self):
+    def param_list(self) -> np.array:
         return np.array([*self.SF, self.muz, self.sigma0]).flatten()
 
     @property

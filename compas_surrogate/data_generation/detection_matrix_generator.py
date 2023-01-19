@@ -62,6 +62,8 @@ def compile_matricies_into_hdf(
     """
     npz_files = glob.glob(npz_regex)
     n = len(npz_files)
+    if n == 0:
+        raise ValueError(f"No files found with regex: {npz_regex}")
     logger.info(f"Compiling {n} matricies into hdf file --> {fname}")
 
     base_uni = Universe.from_npz(npz_files[0])
@@ -128,5 +130,5 @@ def generate_set_of_matricies(
 
     if save_h5_fname != "":
         compile_matricies_into_hdf(
-            os.path.join(outdir, "uni_*.npz"), fname=save_h5_fname
+            os.path.join(outdir, "*.npz"), fname=save_h5_fname
         )
