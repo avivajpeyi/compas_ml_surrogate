@@ -13,3 +13,9 @@ logger.add(
 
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+
+
+import logging
+
+# turn off tensorflow logging

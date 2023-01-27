@@ -5,6 +5,9 @@ from typing import Callable, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy
+
+np.random.seed(1)
 
 TEAR_DOWN = False
 
@@ -17,10 +20,12 @@ CURVY_F = (
     + 0.05 * np.cos(50 * x)
 )
 
+WAVELET_F = lambda x: scipy.stats.norm(0.5, 0.15).pdf(x) * np.sin(50 * x)
+
 
 def train_and_save_model(model_class, data: np.ndarray, model_path: str):
     model = model_class()
-    model.train(data[0], data[1])
+    model.train(data[0], data[1], verbose=True)
     preds = model.predict(data[0])
     model.save(model_path)
     loaded_model = model_class.load(model_path)
@@ -28,23 +33,31 @@ def train_and_save_model(model_class, data: np.ndarray, model_path: str):
     assert np.allclose(preds, loaded_preds)
 
 
-def plot(true_f, model_fs, fname):
+def plot(ax, true_f, models, model_names):
     data = generate_data(true_f, 500)
     x = data[0]
-    plt.plot(x, true_f(x), label="True", color="black", ls="--", zorder=10)
-    for i, model_f in enumerate(model_fs):
-        low_y, mean_y, up_y = model_f(x)
-        plt.plot(x, mean_y, label=f"Model {i}", color=f"C{i}", alpha=0.5)
-        plt.fill_between(
+    y = true_f(x)
+    ax.plot(x, y, label="True", color="black", ls="--", zorder=10)
+    for i, model in enumerate(models):
+        low_y, mean_y, up_y = model(x)
+        ax.plot(
+            x,
+            mean_y,
+            label=f"{model_names[i]} (R^2:{model.r_sqred(data):.2f})",
+            color=f"C{i}",
+            alpha=0.5,
+        )
+        ax.fill_between(
             x.flatten(),
             low_y.flatten(),
             up_y.flatten(),
             alpha=0.1,
             color=f"C{i}",
         )
-    plt.legend()
-    plt.xlim(x.min(), x.max())
-    plt.savefig(fname)
+    ax.legend(frameon=False)
+    ax.set_xlim(x.min(), x.max())
+    ax.set_ylim(y.min(), y.max())
+    ax.axis("off")
 
 
 def generate_data(func: Callable, n=50) -> np.ndarray:
@@ -70,12 +83,25 @@ class TestSurrogate(unittest.TestCase):
         os.rmdir(self.outdir)
 
     def test_deep_gp_model(self):
-        pts = [15, 50, 200]
-        paths = [f"{self.outdir}/deep_gp_model_{i}" for i in pts]
-        for path, pt in zip(paths, pts):
-            train_and_save_model(DeepGPModel, generate_data(CURVY_F, pt), path)
-        plot(
-            CURVY_F,
-            [DeepGPModel.load(p).predict for p in paths],
-            f"{self.outdir}/deep_gp_model.png",
-        )
+        pts = [10, 50, 300]
+        test_funcs = [CURVY_F]
+        num_f = len(test_funcs)
+
+        fig, ax = plt.subplots(num_f, 1, figsize=(5, 3 * num_f))
+        if num_f == 1:
+            ax = [ax]
+
+        for fi, f in enumerate(test_funcs):
+            paths = [f"{self.outdir}/deep_gp_{fi}_model_n{i}" for i in pts]
+            model_names = [f"{i} Training pts " for i in pts]
+            for path, pt in zip(paths, pts):
+                train_and_save_model(DeepGPModel, generate_data(f, pt), path)
+            plot(
+                ax[fi],
+                true_f=f,
+                models=[DeepGPModel.load(p) for p in paths],
+                model_names=model_names,
+            )
+
+        plt.tight_layout()
+        plt.savefig(f"{self.outdir}/deep_gp_model.png")

@@ -62,7 +62,7 @@ class LikelihoodCache(object):
     @property
     def likelihood(self):
         l = np.exp(self.lnl)
-        return l / np.linalg.norm(l)
+        return l / np.sum(l)
 
     def save(self, npz_fn: str):
         """Save likelihood cache to npz file"""
@@ -94,3 +94,12 @@ class LikelihoodCache(object):
             fig.savefig(fname)
         else:
             return fig
+
+    def sample(self, n_samples: int) -> "LikelihoodCache":
+        """Sample from the likelihood distribution"""
+        idx = np.random.choice(
+            len(self.lnl), size=n_samples, p=self.likelihood
+        )
+        return LikelihoodCache(
+            self.lnl[idx], self.params[idx], self.true_params
+        )
