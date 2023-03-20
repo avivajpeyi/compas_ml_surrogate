@@ -116,7 +116,7 @@ def generate_set_of_matricies(
     )
 
     logger.info(
-        f"Generating matricies (with {get_num_workers()} for {n} SF samples with parameters {parameters}"
+        f"Generating matricies (with {get_num_workers()} threads for {n} SF samples with parameters {parameters}"
     )
 
     args = ([compas_h5_path] * n, sf_samples, [save_images] * n, [outdir] * n)
