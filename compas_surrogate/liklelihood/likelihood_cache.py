@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 
 from compas_surrogate.logger import logger
+from compas_surrogate.plotting import safe_savefig
 from compas_surrogate.plotting.corner import plot_corner
 
 
@@ -96,6 +97,10 @@ class LikelihoodCache(object):
     def plot(self, fname=""):
         """Plot the samples weighted by their likelihood"""
 
+        if len(self.lnl) == 0:
+            logger.error("No likelihoods to plot")
+            return
+
         samples = self.get_varying_params(ret_dict=True)
         true_params = None
         if self.true_params is not None:
@@ -108,7 +113,7 @@ class LikelihoodCache(object):
             f"Likelihood weighted samples\n(True lnl: {self.true_lnl:.2f})"
         )
         if fname:
-            fig.savefig(fname)
+            safe_savefig(fig, fname)
         else:
             return fig
 

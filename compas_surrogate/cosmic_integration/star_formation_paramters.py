@@ -64,3 +64,4 @@ def draw_star_formation_samples(
         return [
             dict(zip(dict_of_params, t)) for t in zip(*dict_of_params.values())
         ]
+    return dict_of_params

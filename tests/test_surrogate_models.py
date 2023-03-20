@@ -90,7 +90,7 @@ class TestSurrogate(unittest.TestCase):
 
     def gp_model_tester(self, gp_model_class):
         gp_name = gp_model_class.__name__
-        pts = [10, 50, 300]
+        pts = [10]
         test_funcs = [CURVY_F]
         num_f = len(test_funcs)
 

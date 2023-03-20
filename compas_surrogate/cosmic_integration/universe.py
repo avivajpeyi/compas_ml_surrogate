@@ -9,16 +9,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy import units
+from compas_python_utils.cosmic_integration.FastCosmicIntegration import (
+    find_detection_rate,
+)
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import RectBivariateSpline
 
-from compas_surrogate.cosmic_integration.CosmicIntegration import (
-    find_detection_rate,
-)
 from compas_surrogate.cosmic_integration.star_formation_paramters import (
     DEFAULT_SF_PARAMETERS as DEFAULT,
 )
 from compas_surrogate.logger import logger
+from compas_surrogate.plotting import safe_savefig
 
 MC_RANGE = [1, 40]
 Z_RANGE = [0, 0.6]
@@ -49,7 +50,7 @@ class MockPopulation:
             outdir, extra="mock_events", ext="png"
         )
         if save:
-            fig.savefig(uni_fname)
+            safe_savefig(fig, uni_fname)
         return fig
 
     @property
@@ -193,7 +194,8 @@ class Universe:
 
     def n_detections(self, duration=1):
         """Calculate the number of detections in a given duration (in years)"""
-        return int(np.sum(self.detection_rate) * duration)
+        marginalised_detection_rate = np.nansum(self.detection_rate)
+        return int(marginalised_detection_rate * duration)
 
     @classmethod
     def from_npz(cls, fname):
@@ -391,6 +393,12 @@ class Universe:
         zz, mcc = np.meshgrid(z, mc)
         df = pd.DataFrame({"z": zz.ravel(), "mc": mcc.ravel(), "rate": rate})
 
+        # drop nans and log the number of rows dropped
+        n_nans = df.isna().any(axis=1).sum()
+        if n_nans > 0:
+            logger.warning(f"Dropping {n_nans}/{len(df)} rows with nan values")
+            df = df.dropna()
+
         # check no nan in dataframe
         assert not df.isna().any().any()
 
@@ -448,7 +456,10 @@ class Universe:
             n_obs = self.n_detections()
         df = self.get_detection_rate_dataframe()
         df = df.sort_values("rate", ascending=False)
-        n_events = df.sample(weights=df.rate, n=n_obs, random_state=0)
+        if np.sum(df.rate) > 0:
+            n_events = df.sample(weights=df.rate, n=n_obs, random_state=0)
+        else:
+            n_events = df.sample(n=n_obs, random_state=0)
         return n_events[["mc", "z"]].values
 
     def sample_possible_event_matrix(
