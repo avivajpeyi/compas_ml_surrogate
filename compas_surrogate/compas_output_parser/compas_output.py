@@ -34,8 +34,10 @@ Run_Details_Filename = "Run_Details"
 
 
 class CompasOutput:
-    def __init__(self, h5):
+    def __init__(self, h5:h5py.File, h5_filename:str=""):
         self.h5 = h5
+        self.h5_filename = h5_filename
+
 
     def printSummary(self, h5name=None, h5file=None, excludeList=""):
         """LIFTED FROM COMPAS UTILS"""
@@ -239,6 +241,12 @@ class CompasOutput:
         with Capturing() as o:
             self.printSummary()
         return "\n".join(o)
+
+    @classmethod
+    def from_hdf5(cls, h5name: str, ):
+        return cls(h5py(h5name, 'r'), h5name)
+
+
 
 
 #

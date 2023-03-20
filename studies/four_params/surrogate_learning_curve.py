@@ -11,7 +11,6 @@ from compas_surrogate.inference_runner import (
     get_training_lnl_cache,
 )
 from compas_surrogate.surrogate.models import SklearnGPModel
-
 OUTDIR = "out_learning_curve"
 H5 = "det_matrix.h5"
 random.seed(1)
