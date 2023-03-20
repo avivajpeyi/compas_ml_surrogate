@@ -1,2 +1,2 @@
 from .deep_gp_model import DeepGPModel
-from .gp_model import GPModel
+from .sklearn_gp_model import SklearnGPModel

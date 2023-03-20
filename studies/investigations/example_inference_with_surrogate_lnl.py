@@ -1,5 +1,5 @@
 """
-Test to run inference on some data with a surrogate model
+Test to run inference on some line data with a surrogate lnl likelihood trained on the line data's Gaussian Likelihood
 """
 
 import os

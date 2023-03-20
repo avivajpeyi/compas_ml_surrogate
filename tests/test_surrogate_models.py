@@ -11,7 +11,7 @@ np.random.seed(1)
 
 TEAR_DOWN = False
 
-from compas_surrogate.surrogate.models import DeepGPModel, GPModel
+from compas_surrogate.surrogate.models import DeepGPModel, SklearnGPModel
 
 CURVY_F = (
     lambda x: 0.2
@@ -83,6 +83,13 @@ class TestSurrogate(unittest.TestCase):
         os.rmdir(self.outdir)
 
     def test_deep_gp_model(self):
+        self.gp_model_tester(DeepGPModel)
+
+    def test_sklearn_gp_model(self):
+        self.gp_model_tester(SklearnGPModel)
+
+    def gp_model_tester(self, gp_model_class):
+        gp_name = gp_model_class.__name__
         pts = [10, 50, 300]
         test_funcs = [CURVY_F]
         num_f = len(test_funcs)
@@ -92,16 +99,18 @@ class TestSurrogate(unittest.TestCase):
             ax = [ax]
 
         for fi, f in enumerate(test_funcs):
-            paths = [f"{self.outdir}/deep_gp_{fi}_model_n{i}" for i in pts]
+            paths = [f"{self.outdir}/{gp_name}_{fi}_model_n{i}" for i in pts]
             model_names = [f"{i} Training pts " for i in pts]
             for path, pt in zip(paths, pts):
-                train_and_save_model(DeepGPModel, generate_data(f, pt), path)
+                train_and_save_model(
+                    gp_model_class, generate_data(f, pt), path
+                )
             plot(
                 ax[fi],
                 true_f=f,
-                models=[DeepGPModel.load(p) for p in paths],
+                models=[gp_model_class.load(p) for p in paths],
                 model_names=model_names,
             )
 
         plt.tight_layout()
-        plt.savefig(f"{self.outdir}/deep_gp_model.png")
+        plt.savefig(f"{self.outdir}/{gp_name}.png")

@@ -448,7 +448,7 @@ class Universe:
             n_obs = self.n_detections()
         df = self.get_detection_rate_dataframe()
         df = df.sort_values("rate", ascending=False)
-        n_events = df.sample(weights=df.rate, n=n_obs)
+        n_events = df.sample(weights=df.rate, n=n_obs, random_state=0)
         return n_events[["mc", "z"]].values
 
     def sample_possible_event_matrix(

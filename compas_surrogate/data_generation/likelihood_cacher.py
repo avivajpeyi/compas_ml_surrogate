@@ -74,11 +74,16 @@ def compute_and_cache_lnl(
             total=n,
         )
     )
-
+    true_lnl = ln_likelihood(
+        mcz_obs=mock_population.mcz,
+        model_prob_func=mock_population.universe.prob_of_mcz,
+        n_model=mock_population.universe.n_detections(),
+    )
     lnl_cache = LikelihoodCache(
         lnl=lnl_and_param_list[:, 0],
         params=lnl_and_param_list[:, 1:],
         true_params=mock_population.param_list,
+        true_lnl=true_lnl,
     )
     lnl_cache.save(cache_lnl_file)
     logger.success(f"Saved {cache_lnl_file}")

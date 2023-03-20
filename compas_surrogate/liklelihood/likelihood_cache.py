@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 
@@ -14,10 +14,12 @@ class LikelihoodCache(object):
         lnl: np.ndarray,
         params: np.ndarray,
         true_params: Optional[np.array] = None,
+        true_lnl: Optional[float] = None,
     ):
         self.lnl = lnl
         self.params = params
         self.true_params = true_params
+        self.true_lnl = true_lnl
         self._clean()
 
     def _clean(self):
@@ -32,6 +34,20 @@ class LikelihoodCache(object):
                 f"Keeping {new_len}/{init_len} likelihoods (dropping nans/inf)."
             )
 
+    def get_varying_params(self, ret_dict=False) -> Union[Dict, np.ndarray]:
+        """Get the parameters that change"""
+        params = {
+            k: v for k, v in self.param_dict.items() if not len(set(v)) == 1
+        }
+        if ret_dict:
+            return params
+        else:
+            return np.array(list(params.values()))
+
+    def get_varying_param_keys(self) -> List[str]:
+        data = self.get_varying_params(ret_dict=True)
+        return list(data.keys())
+
     @classmethod
     def from_npz(cls, npz_fn: str):
         """Load likelihood cache from npz file"""
@@ -39,7 +55,8 @@ class LikelihoodCache(object):
             lnl = data["lnl"]
             params = data["params"]
             true_params = data.get("true_params", None)
-        return cls(lnl, params, true_params)
+            true_lnl = data.get("true_lnl", None)
+        return cls(lnl, params, true_params, true_lnl)
 
     @property
     def param_dict(self) -> Dict[str, np.ndarray]:
@@ -69,6 +86,8 @@ class LikelihoodCache(object):
         kwgs = dict(lnl=self.lnl, params=self.params)
         if self.true_params is not None:
             kwgs["true_params"] = self.true_params
+        if self.true_lnl is not None:
+            kwgs["true_lnl"] = self.true_lnl
         np.savez(npz_fn, **kwgs)
 
     def __repr__(self) -> str:
@@ -76,19 +95,17 @@ class LikelihoodCache(object):
 
     def plot(self, fname=""):
         """Plot the samples weighted by their likelihood"""
-        labels_to_keep = [
-            k for k, v in self.param_dict.items() if len(set(v)) > 1
-        ]
-        samples = {
-            k: v for k, v in self.param_dict.items() if k in labels_to_keep
-        }
+
+        samples = self.get_varying_params(ret_dict=True)
+        true_params = None
         if self.true_params is not None:
-            true_params = [
-                v for k, v in self.true_dict.items() if k in labels_to_keep
-            ]
+            true_params = [self.true_dict[k] for k in list(samples.keys())]
 
         fig = plot_corner(
             samples, prob=self.likelihood, true_params=true_params
+        )
+        fig.suptitle(
+            f"Likelihood weighted samples\n(True lnl: {self.true_lnl:.2f})"
         )
         if fname:
             fig.savefig(fname)
@@ -101,5 +118,12 @@ class LikelihoodCache(object):
             len(self.lnl), size=n_samples, p=self.likelihood
         )
         return LikelihoodCache(
-            self.lnl[idx], self.params[idx], self.true_params
+            self.lnl[idx], self.params[idx], self.true_params, self.true_lnl
         )
+
+    @property
+    def true_param_vals(self):
+        data = np.array(
+            [self.true_dict[k] for k in self.get_varying_param_keys()]
+        )
+        return data.reshape(1, -1)

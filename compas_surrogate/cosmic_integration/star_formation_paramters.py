@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
+from bilby.core.prior import PriorDict, Uniform
 from scipy.stats import qmc
 from scipy.stats.qmc import LatinHypercube
 
@@ -19,6 +20,23 @@ STAR_FORMATION_RANGES = dict(
     aSF=[0.005, 0.015],
     dSF=[4.2, 5.2],
 )
+LATEX_LABELS = dict(
+    muz=r"$\mu_z$",
+    sigma0=r"$\sigma_0$",
+    aSF=r"$\rm{SF}[a]$",
+    dSF=r"$\rm{SF}[d]$",
+)
+
+
+def get_star_formation_prior(parameters=None) -> PriorDict:
+    if parameters is None:
+        parameters = list(STAR_FORMATION_RANGES.keys())
+    pri = dict()
+    for p in parameters:
+        pri[p] = Uniform(
+            *STAR_FORMATION_RANGES[p], name=p, latex_label=LATEX_LABELS[p]
+        )
+    return PriorDict(pri)
 
 
 def draw_star_formation_samples(
@@ -26,7 +44,7 @@ def draw_star_formation_samples(
 ) -> Union[Dict[str, np.ndarray], List[Dict]]:
     """Draw samples from the star formation parameters."""
     if parameters is None:
-        parameters = ["muz", "sigma0", "aSF", "dSF"]
+        parameters = list(STAR_FORMATION_RANGES.keys())
     assert all(
         [p in STAR_FORMATION_RANGES for p in parameters]
     ), "Invalid parameters"
