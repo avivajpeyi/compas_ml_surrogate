@@ -5,9 +5,7 @@ from compas_surrogate.logger import logger
 from compas_surrogate.utils import download_file
 
 CLEAN = True
-DATA_LINK = (
-    "https://sandbox.zenodo.org/record/1145903/files/uni.npz?download=1"
-)
+DATA_LINK = "https://sandbox.zenodo.org/record/1145903/files/uni.npz?download=1"
 DATA_FILE = "uni.npz"
 
 

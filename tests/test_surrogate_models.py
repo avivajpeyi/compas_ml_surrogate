@@ -14,10 +14,7 @@ TEAR_DOWN = False
 from compas_surrogate.surrogate.models import DeepGPModel, SklearnGPModel
 
 CURVY_F = (
-    lambda x: 0.2
-    + 0.4 * x**2
-    + 0.3 * x * np.sin(15 * x)
-    + 0.05 * np.cos(50 * x)
+    lambda x: 0.2 + 0.4 * x**2 + 0.3 * x * np.sin(15 * x) + 0.05 * np.cos(50 * x)
 )
 
 WAVELET_F = lambda x: scipy.stats.norm(0.5, 0.15).pdf(x) * np.sin(50 * x)
@@ -102,9 +99,7 @@ class TestSurrogate(unittest.TestCase):
             paths = [f"{self.outdir}/{gp_name}_{fi}_model_n{i}" for i in pts]
             model_names = [f"{i} Training pts " for i in pts]
             for path, pt in zip(paths, pts):
-                train_and_save_model(
-                    gp_model_class, generate_data(f, pt), path
-                )
+                train_and_save_model(gp_model_class, generate_data(f, pt), path)
             plot(
                 ax[fi],
                 true_f=f,

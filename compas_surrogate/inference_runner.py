@@ -9,14 +9,9 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .cosmic_integration.star_formation_paramters import (
-    get_star_formation_prior,
-)
+from .cosmic_integration.star_formation_paramters import get_star_formation_prior
 from .cosmic_integration.universe import Universe
-from .data_generation.likelihood_cacher import (
-    LikelihoodCache,
-    compute_and_cache_lnl,
-)
+from .data_generation.likelihood_cacher import LikelihoodCache, compute_and_cache_lnl
 from .logger import logger
 from .surrogate.models import DeepGPModel, SklearnGPModel
 from .surrogate.surrogate_likelihood import SurrogateLikelihood
@@ -104,7 +99,7 @@ def run_inference(
     n=None,
     clean=False,
     sampler="dynesty",
-):
+) -> bilby.core.result.Result:
     os.makedirs(outdir, exist_ok=True)
 
     if cache_outdir is None:
@@ -153,3 +148,4 @@ def run_inference(
     pred_lnl = model.prediction_str(data_cache.true_param_vals)
     fig.suptitle(f"model lnl: {true_lnl:.2f}\n" f"surro lnl: ${pred_lnl}$")
     fig.savefig(os.path.join(outdir, "corner.png"))
+    return surr_result

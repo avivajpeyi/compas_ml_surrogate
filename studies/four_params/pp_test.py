@@ -67,9 +67,7 @@ def main():
         try:
             start = time()
             # disable all logging
-            with contextlib.redirect_stdout(None), contextlib.redirect_stderr(
-                None
-            ):
+            with contextlib.redirect_stdout(None), contextlib.redirect_stderr(None):
                 run_inference(outdir=outdir, universe_id=i, **const_kwgs)
             end = time()
             avg_times.append(end - start)

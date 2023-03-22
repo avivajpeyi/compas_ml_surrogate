@@ -242,9 +242,7 @@ def test_inference_run(clean=False):
     )
 
     crner = plot_corner(normal_result, color="tab:red")
-    plot_corner(
-        surr_result, color="tab:blue", fig=crner, savefn=f"{OUTDIR}/corner.png"
-    )
+    plot_corner(surr_result, color="tab:blue", fig=crner, savefn=f"{OUTDIR}/corner.png")
 
 
 if __name__ == "__main__":

@@ -46,9 +46,7 @@ def get_params_from_universe_paths(path):
 
     param_names = ["n", "aSF", "bSF", "cSF", "dSF", "muz", "", "sigma0"]
     params = re.findall(r"[-+]?\d*\.\d+|\d+", path)
-    param_vals = {
-        name: float(param) for name, param in zip(param_names, params)
-    }
+    param_vals = {name: float(param) for name, param in zip(param_names, params)}
     param_vals.pop("")
     return param_vals
 

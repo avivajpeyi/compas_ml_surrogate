@@ -21,9 +21,7 @@ def read_sensitivity_file(fname: str) -> Dict[str, np.ndarray]:
     # if fname ends with .hdf5, read the data from the hdf5 file
     elif fname.endswith(".hdf5"):
         with h5py.File(fname, "r") as f:
-            data = f["snr_values"][
-                "SimNoisePSDaLIGOMidHighSensitivityP1200087"
-            ]
+            data = f["snr_values"]["SimNoisePSDaLIGOMidHighSensitivityP1200087"]
             raise NotImplementedError("Not implemented yet")
     else:
         raise ValueError("File must be a .txt file")

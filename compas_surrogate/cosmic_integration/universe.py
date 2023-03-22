@@ -39,16 +39,10 @@ class MockPopulation:
         self.dSF = universe.SF[3]
 
     def plot(self, save=True, outdir="."):
-        fig = self.universe.plot_detection_rate_matrix(
-            save=False, titles=False
-        )
+        fig = self.universe.plot_detection_rate_matrix(save=False, titles=False)
         axes = fig.get_axes()
-        axes[0].scatter(
-            self.mcz[:, 1], self.mcz[:, 0], s=100, c="skyblue", marker="*"
-        )
-        uni_fname = self.universe._get_fname(
-            outdir, extra="mock_events", ext="png"
-        )
+        axes[0].scatter(self.mcz[:, 1], self.mcz[:, 0], s=100, c="skyblue", marker="*")
+        uni_fname = self.universe._get_fname(outdir, extra="mock_events", ext="png")
         if save:
             safe_savefig(fig, uni_fname)
         return fig
@@ -375,9 +369,7 @@ class Universe:
             muz=self.muz,
             sigma0=self.sigma0,
         )
-        logger.debug(
-            f"Binning data {self.detection_rate.shape} -> {binned_data.shape}"
-        )
+        logger.debug(f"Binning data {self.detection_rate.shape} -> {binned_data.shape}")
         return new_uni
 
     def get_detection_rate_spline(self):
@@ -462,9 +454,7 @@ class Universe:
             n_events = df.sample(n=n_obs, random_state=0)
         return n_events[["mc", "z"]].values
 
-    def sample_possible_event_matrix(
-        self, n_obs: int = None
-    ) -> MockPopulation:
+    def sample_possible_event_matrix(self, n_obs: int = None) -> MockPopulation:
         """Make a fake detection matrix with the same shape as the universe"""
         # FIXME: draw from the detection rate distribution using poisson distributions
         if n_obs is None:
@@ -494,9 +484,7 @@ def bin_data2d(data2d, data1d, bins, axis=0):
     assert num_bins != data2d.shape[axis], "More bins than data-rows!"
 
     bin_data1d_falls_in = np.digitize(data1d, bins)
-    assert len(bin_data1d_falls_in) == len(
-        data1d
-    ), "Something went wrong with binning"
+    assert len(bin_data1d_falls_in) == len(data1d), "Something went wrong with binning"
     assert data2d.shape[axis] == len(data1d), "Data2d and bins do not match"
 
     # bin data

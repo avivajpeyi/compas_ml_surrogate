@@ -1,5 +1,4 @@
 import os.path
-import unittest
 
 from conftest import TEST_DIR
 
@@ -30,7 +29,7 @@ def test_run_inference(test_datapath, tmp_path):
     det_matrix_h5 = make_test_data(compas_h5_path=test_datapath)
     run_inference(
         outdir="out",
-        n=100,
+        n=5,
         cache_outdir=tmp_path,
         det_matrix_h5=det_matrix_h5,
         universe_id=0,

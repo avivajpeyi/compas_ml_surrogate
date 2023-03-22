@@ -11,6 +11,7 @@ from compas_surrogate.inference_runner import (
     get_training_lnl_cache,
 )
 from compas_surrogate.surrogate.models import SklearnGPModel
+
 OUTDIR = "out_learning_curve"
 H5 = "det_matrix.h5"
 random.seed(1)
@@ -18,13 +19,7 @@ random.seed(1)
 
 def plot_learning_curve(title, cache, n_pts, scoring, axes=None):
     # collect data
-    (
-        train_sizes,
-        train_scores,
-        test_scores,
-        fit_times,
-        pred_times,
-    ) = learning_curve(
+    (train_sizes, train_scores, test_scores, fit_times, pred_times,) = learning_curve(
         estimator=SklearnGPModel().get_model(),
         X=cache.params,
         y=cache.lnl,
@@ -60,23 +55,17 @@ def plot_learning_curve(title, cache, n_pts, scoring, axes=None):
         alpha=0.1,
         color="r",
     )
-    axes[0].plot(
-        train_sizes, train_mu, "o-", color="r", label="Training score"
-    )
+    axes[0].plot(train_sizes, train_mu, "o-", color="r", label="Training score")
     axes[0].fill_between(
         train_sizes, tst_mu - tst_std, tst_mu + tst_std, alpha=0.1, color="g"
     )
-    axes[0].plot(
-        train_sizes, tst_mu, "o-", color="g", label="Cross-validation score"
-    )
+    axes[0].plot(train_sizes, tst_mu, "o-", color="g", label="Cross-validation score")
     axes[0].legend(loc="best")
 
     # Plot n_samples vs fit_times
     axes[1].grid()
     axes[1].plot(train_sizes, time_mu, "o-")
-    axes[1].fill_between(
-        train_sizes, time_mu - time_std, time_mu + time_std, alpha=0.1
-    )
+    axes[1].fill_between(train_sizes, time_mu - time_std, time_mu + time_std, alpha=0.1)
     axes[1].set_xlabel("Training datapoints")
     axes[1].set_ylabel("Train time [s]")
     axes[1].set_title("Scalability of the model")
@@ -84,9 +73,7 @@ def plot_learning_curve(title, cache, n_pts, scoring, axes=None):
     # Plot n_samples vs pred_time
     axes[2].grid()
     axes[2].plot(train_sizes, prd_mu, "o-")
-    axes[2].fill_between(
-        train_sizes, prd_mu - prd_std, prd_mu + prd_std, alpha=0.1
-    )
+    axes[2].fill_between(train_sizes, prd_mu - prd_std, prd_mu + prd_std, alpha=0.1)
     axes[2].set_xlabel("Training datapoints")
     axes[2].set_ylabel("Prediction time [s]")
     axes[2].set_title("Performance of the model")
@@ -96,9 +83,7 @@ def plot_learning_curve(title, cache, n_pts, scoring, axes=None):
 
 def main():
     os.makedirs(OUTDIR, exist_ok=True)
-    cache = get_training_lnl_cache(
-        outdir=OUTDIR, det_matrix_h5=H5, universe_id=5000
-    )
+    cache = get_training_lnl_cache(outdir=OUTDIR, det_matrix_h5=H5, universe_id=5000)
     n_pts = np.linspace(100, 1500, 15).astype(int)
     fig, axes = plt.subplots(3, 2, figsize=(10, 15))
     plot_learning_curve("|R2|", cache, n_pts, scoring="r2", axes=axes[:, 0])

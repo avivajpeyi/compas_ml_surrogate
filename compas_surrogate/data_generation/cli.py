@@ -9,12 +9,8 @@ from compas_surrogate.logger import logger
 
 def cli_matrix_generation():
     """CLI for generating COMPAS detection rate matricies"""
-    parser = ArgumentParser(
-        description="Generate COMPAS detection rate matricies"
-    )
-    parser.add_argument(
-        "--compas_h5_path", type=str, help="path to COMPAS h5 file"
-    )
+    parser = ArgumentParser(description="Generate COMPAS detection rate matricies")
+    parser.add_argument("--compas_h5_path", type=str, help="path to COMPAS h5 file")
     parser.add_argument(
         "--n", type=int, default=100, help="number of matricies to generate"
     )
@@ -60,9 +56,7 @@ def cli_compile_h5():
     parser = ArgumentParser(
         description="Compile COMPAS detection rate matricies into a single hdf file"
     )
-    parser.add_argument(
-        "--npz_regex", type=str, help="regex to match npz files"
-    )
+    parser.add_argument("--npz_regex", type=str, help="regex to match npz files")
     parser.add_argument("--fname", type=str, help="name of output h5 file")
     args = parser.parse_args()
     logger.info(f"Running h5 complier args: {args}")

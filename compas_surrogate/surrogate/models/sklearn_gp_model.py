@@ -36,9 +36,7 @@ class SklearnGPModel(Model):
         self._model.fit(train_in, train_out)
         self.trained = True
         self.input_dim = inputs.shape[1]
-        metrics = self.train_test_metrics(
-            [train_in, train_out], [test_in, test_out]
-        )
+        metrics = self.train_test_metrics([train_in, train_out], [test_in, test_out])
         return metrics
 
     def predict(self, x: np.ndarray) -> np.ndarray:

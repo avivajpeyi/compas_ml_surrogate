@@ -3,9 +3,7 @@ from typing import Callable, Union
 import numpy as np
 
 
-def ln_poisson_likelihood(
-    n_obs: int, n_model: int, ignore_factorial=True
-) -> float:
+def ln_poisson_likelihood(n_obs: int, n_model: int, ignore_factorial=True) -> float:
     """
     Computes LnL(N_obs | N_model) = N_obs * ln(N_model) - N_model - ln(N_obs!)
 
@@ -24,9 +22,7 @@ def ln_poisson_likelihood(
     return lnl
 
 
-def ln_mcz_grid_likelihood(
-    mcz_obs: np.ndarray, model_prob_func: Callable
-) -> float:
+def ln_mcz_grid_likelihood(mcz_obs: np.ndarray, model_prob_func: Callable) -> float:
     """
     Computes LnL(mc, z | model) = sum_i  ln p(mc_i, z_i | model)     (for N_obs events)
     :param mcz_obs: [[mc,z], [mc,z], ...] Array of observed mc and z values for each event (exact measurement)

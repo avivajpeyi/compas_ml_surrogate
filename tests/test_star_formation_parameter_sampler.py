@@ -15,9 +15,7 @@ def test_sampler(tmp_path):
     assert samples_1000["aSF"].shape == (1000,)
     assert samples_1000["dSF"].shape == (1000,)
 
-    samples_30 = pd.DataFrame(
-        draw_star_formation_samples(30, parameters, as_list=True)
-    )
+    samples_30 = pd.DataFrame(draw_star_formation_samples(30, parameters, as_list=True))
 
     if PLOT:
         import matplotlib.pyplot as plt

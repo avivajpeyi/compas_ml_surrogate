@@ -51,9 +51,7 @@ def generate_gifs(outdir="."):
     )
 
 
-def compile_matricies_into_hdf(
-    npz_regex, fname="detection_matricies.h5"
-) -> None:
+def compile_matricies_into_hdf(npz_regex, fname="detection_matricies.h5") -> None:
     """
     Compile a set of COMPAS detection rate matricies into a single hdf file
     :param npz_paths: list of paths to npz files
@@ -74,9 +72,7 @@ def compile_matricies_into_hdf(
         f.attrs["redshifts"] = base_uni.redshifts
         f.attrs["chirp_masses"] = base_uni.chirp_masses
         f.attrs["parameter_labels"] = base_uni.param_names
-        f.create_dataset(
-            "detection_matricies", (n, *base_uni.detection_rate.shape)
-        )
+        f.create_dataset("detection_matricies", (n, *base_uni.detection_rate.shape))
         f.create_dataset("parameters", (n, *base_uni.param_list.shape))
         for i in tqdm(range(n), "Writing matricies to hdf file"):
             uni = Universe.from_npz(npz_files[i])
@@ -111,24 +107,18 @@ def generate_set_of_matricies(
     if outdir != ".":
         os.makedirs(outdir, exist_ok=True)
 
-    sf_samples = draw_star_formation_samples(
-        n, parameters=parameters, as_list=True
-    )
+    sf_samples = draw_star_formation_samples(n, parameters=parameters, as_list=True)
 
     logger.info(
         f"Generating matricies (with {get_num_workers()} threads for {n} SF samples with parameters {parameters}"
     )
 
     args = ([compas_h5_path] * n, sf_samples, [save_images] * n, [outdir] * n)
-    process_map(
-        generate_matrix, *args, max_workers=get_num_workers(), chunksize=10
-    )
+    process_map(generate_matrix, *args, max_workers=get_num_workers(), chunksize=10)
 
     if save_images:
         logger.info("Making GIFs")
         generate_gifs(outdir=outdir)
 
     if save_h5_fname != "":
-        compile_matricies_into_hdf(
-            os.path.join(outdir, "*.npz"), fname=save_h5_fname
-        )
+        compile_matricies_into_hdf(os.path.join(outdir, "*.npz"), fname=save_h5_fname)

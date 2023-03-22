@@ -37,9 +37,7 @@ class LikelihoodCache(object):
 
     def get_varying_params(self, ret_dict=False) -> Union[Dict, np.ndarray]:
         """Get the parameters that change"""
-        params = {
-            k: v for k, v in self.param_dict.items() if not len(set(v)) == 1
-        }
+        params = {k: v for k, v in self.param_dict.items() if not len(set(v)) == 1}
         if ret_dict:
             return params
         else:
@@ -106,12 +104,8 @@ class LikelihoodCache(object):
         if self.true_params is not None:
             true_params = [self.true_dict[k] for k in list(samples.keys())]
 
-        fig = plot_corner(
-            samples, prob=self.likelihood, true_params=true_params
-        )
-        fig.suptitle(
-            f"Likelihood weighted samples\n(True lnl: {self.true_lnl:.2f})"
-        )
+        fig = plot_corner(samples, prob=self.likelihood, true_params=true_params)
+        fig.suptitle(f"Likelihood weighted samples\n(True lnl: {self.true_lnl:.2f})")
         if fname:
             safe_savefig(fig, fname)
         else:
@@ -119,16 +113,12 @@ class LikelihoodCache(object):
 
     def sample(self, n_samples: int) -> "LikelihoodCache":
         """Sample from the likelihood distribution"""
-        idx = np.random.choice(
-            len(self.lnl), size=n_samples, p=self.likelihood
-        )
+        idx = np.random.choice(len(self.lnl), size=n_samples, p=self.likelihood)
         return LikelihoodCache(
             self.lnl[idx], self.params[idx], self.true_params, self.true_lnl
         )
 
     @property
     def true_param_vals(self):
-        data = np.array(
-            [self.true_dict[k] for k in self.get_varying_param_keys()]
-        )
+        data = np.array([self.true_dict[k] for k in self.get_varying_param_keys()])
         return data.reshape(1, -1)

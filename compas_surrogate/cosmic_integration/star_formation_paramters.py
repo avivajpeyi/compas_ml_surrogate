@@ -33,9 +33,7 @@ def get_star_formation_prior(parameters=None) -> PriorDict:
         parameters = list(STAR_FORMATION_RANGES.keys())
     pri = dict()
     for p in parameters:
-        pri[p] = Uniform(
-            *STAR_FORMATION_RANGES[p], name=p, latex_label=LATEX_LABELS[p]
-        )
+        pri[p] = Uniform(*STAR_FORMATION_RANGES[p], name=p, latex_label=LATEX_LABELS[p])
     return PriorDict(pri)
 
 
@@ -45,23 +43,15 @@ def draw_star_formation_samples(
     """Draw samples from the star formation parameters."""
     if parameters is None:
         parameters = list(STAR_FORMATION_RANGES.keys())
-    assert all(
-        [p in STAR_FORMATION_RANGES for p in parameters]
-    ), "Invalid parameters"
+    assert all([p in STAR_FORMATION_RANGES for p in parameters]), "Invalid parameters"
     num_dim = len(parameters)
     sampler = LatinHypercube(d=num_dim)
     samples = sampler.random(n)
     parameter_ranges = np.array([STAR_FORMATION_RANGES[p] for p in parameters])
     lower_bound = parameter_ranges[:, 0]
     upper_bound = parameter_ranges[:, 1]
-    scaled_samples = qmc.scale(
-        samples, l_bounds=lower_bound, u_bounds=upper_bound
-    )
-    dict_of_params = {
-        p: scaled_samples[:, i] for i, p in enumerate(parameters)
-    }
+    scaled_samples = qmc.scale(samples, l_bounds=lower_bound, u_bounds=upper_bound)
+    dict_of_params = {p: scaled_samples[:, i] for i, p in enumerate(parameters)}
     if as_list:
-        return [
-            dict(zip(dict_of_params, t)) for t in zip(*dict_of_params.values())
-        ]
+        return [dict(zip(dict_of_params, t)) for t in zip(*dict_of_params.values())]
     return dict_of_params

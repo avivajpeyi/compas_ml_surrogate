@@ -91,9 +91,7 @@ def recursively_save_dict_contents_to_group(
     for key, item in dic.items():
         item = encode_for_hdf5(key, item)
         if isinstance(item, dict):
-            recursively_save_dict_contents_to_group(
-                h5_file, path + key + "/", item
-            )
+            recursively_save_dict_contents_to_group(h5_file, path + key + "/", item)
         else:
             h5_file[path + key] = item
 

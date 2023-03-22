@@ -7,10 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
-from compas_surrogate.cosmic_integration.universe import (
-    MockPopulation,
-    Universe,
-)
+from compas_surrogate.cosmic_integration.universe import MockPopulation, Universe
 from compas_surrogate.liklelihood import LikelihoodCache, ln_likelihood
 from compas_surrogate.logger import logger
 from compas_surrogate.utils import get_num_workers
@@ -32,9 +29,7 @@ def _get_lnl_and_param_from_npz(npz_fn: str, observed_mcz: np.ndarray):
     return _get_lnl_and_param_uni(uni, observed_mcz)
 
 
-def _get_lnl_and_param_from_h5(
-    h5_path: h5py.File, idx: int, observed_mcz: np.ndarray
-):
+def _get_lnl_and_param_from_h5(h5_path: h5py.File, idx: int, observed_mcz: np.ndarray):
     uni = Universe.from_hdf5(h5py.File(h5_path, "r"), idx)
     return _get_lnl_and_param_uni(uni, observed_mcz)
 

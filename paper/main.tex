@@ -30,10 +30,10 @@ We present BLAH
 
 \section{Introduction} \label{sec:intro}
 
-Astrophysical processes that govern stellar, binary system evolution, and the production of binary black holes (BBH) that produce gravitational waves (GW) detectable by current instrumentation (e.g. aLIGO, VIRGO, KAGRA, the \lvk) are very uncertain. 
-Over the next few years, we will accumulate a population of several hundred BBH mergers. 
-We can use the population of mergers to constrain some parameters describing astrophysical processes, such as the star formation rate in the early universe. 
-In this work, we use \compas, a rapid stellar population synthesis tool, to model the universe with different star formation rates (SFR) and try to place constraints on the SFR that can reproduce the \lvk\ detections. 
+Astrophysical processes that govern stellar, binary system evolution, and the production of binary black holes (BBH) that produce gravitational waves (GW) detectable by current instrumentation (e.g. aLIGO, VIRGO, KAGRA, the \lvk) are very uncertain.
+Over the next few years, we will accumulate a population of several hundred BBH mergers.
+We can use the population of mergers to constrain some parameters describing astrophysical processes, such as the star formation rate in the early universe.
+In this work, we use \compas, a rapid stellar population synthesis tool, to model the universe with different star formation rates (SFR) and try to place constraints on the SFR that can reproduce the \lvk\ detections.
 
 
 The remainder of the paper is organised as follows.
@@ -45,9 +45,9 @@ Finally, we discuss caveats and provide concluding remarks in Section~\ref{sec:c
 \section{Method} \label{sec:method}
 
 
-The \lvk\ has detected $\sim90$ GW signals from a population of merging BBHs. 
+The \lvk\ has detected $\sim90$ GW signals from a population of merging BBHs.
 Each BBH has some parameters $\vec{\theta}$ that describe the system, such as the BBH's chirp-mass $\mathcal{M}$, spin magnitude $\chi$, spin angle $\theta$, and redshift $z$.
-On the other hand, \compas\ can generate populations of merging BBHs using different initial star formation parameters $\vec{\lambda}$. 
+On the other hand, \compas\ can generate populations of merging BBHs using different initial star formation parameters $\vec{\lambda}$.
 
 Therefore, we can use \compas\ to determine the posterior on $\vec{\lambda}$ given \lvk's $N_{\rm obs}$ observed BBHs and their parameters $\vec{D} = \{ p_i(\vec{\theta}|h), ...\}$ (where $h$ is the strain data):
 \begin{equation}
@@ -68,7 +68,7 @@ Here, $\mathcal{L}(\vec{D}| \vec{\lambda})$ can be written as:
 
 \section{Toy Model}
 
-In this section, we delve into a toy-model problem of just using the \lvk\ chirp-masses and \compas\ chirp-masses, marginalising over the redshift. 
+In this section, we delve into a toy-model problem of just using the \lvk\ chirp-masses and \compas\ chirp-masses, marginalising over the redshift.
 
 In this case, we create a surrogate for $\mathcal{L}$.
 

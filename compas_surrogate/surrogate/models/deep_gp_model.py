@@ -49,9 +49,7 @@ class DeepGPModel(Model):
 
             tasks = []
             tasks += [gpflow.monitor.ModelToTensorBoard(logdir, self._model)]
-            tasks += [
-                ScalarCallback(logdir, self._model.training_loss, "loss")
-            ]
+            tasks += [ScalarCallback(logdir, self._model.training_loss, "loss")]
             tasks += [ScalarCallback(logdir, train_r2, "train_R2")]
             tasks += [ScalarCallback(logdir, test_r2, "test_R2")]
             tasks += [gpflow.monitor.ExecuteCallback(print_stats)]
@@ -78,9 +76,7 @@ class DeepGPModel(Model):
         """Helper function for the predict method while training"""
         return self._model.predict_f(xnew, full_cov=False)
 
-    def predict(
-        self, x: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def predict(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Predict the output of the model for the given input."""
         if hasattr(self._model, "predict"):
             pred = self._model.predict
@@ -119,8 +115,5 @@ class DeepGPModel(Model):
 
         er_st = "{}: <{:.2f}|{:.2f}>"
 
-        log = (
-            f"Loss:{train_l:.2f} | "
-            f"{er_st.format('R^2', train_r2, test_r2)} "
-        )
+        log = f"Loss:{train_l:.2f} | " f"{er_st.format('R^2', train_r2, test_r2)} "
         logger.info(log)
