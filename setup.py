@@ -30,6 +30,8 @@ INSTALL_REQUIRES = [
     "requests",
     "gpflow",
     "george",
+    "scikit-learn",
+    "arviz"
 ]
 EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [
