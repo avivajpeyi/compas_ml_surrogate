@@ -138,6 +138,11 @@ class Model(ABC):
             "test": self._get_metrics(test_data),
         }
 
+    def plot_training_results(self, train_data, test_data):
+        """Plot the training results."""
+        pass
+
+
 
 class Metrics:
     def __init__(self, mae, mse, r2):

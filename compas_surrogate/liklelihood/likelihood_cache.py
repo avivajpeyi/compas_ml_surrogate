@@ -23,6 +23,11 @@ class LikelihoodCache(object):
         self.true_lnl = true_lnl
         self._clean()
 
+    @property
+    def n(self)->int:
+        return len(self.lnl)
+
+
     def _clean(self):
         """Remove likelihoods with nans/inf/-inf"""
         mask = np.isfinite(self.lnl)
@@ -92,7 +97,7 @@ class LikelihoodCache(object):
     def __repr__(self) -> str:
         return f"LikelihoodCache({len(self.lnl)} likelihoods)"
 
-    def plot(self, fname=""):
+    def plot(self, fname="", show_datapoints=False):
         """Plot the samples weighted by their likelihood"""
 
         if len(self.lnl) == 0:
@@ -104,8 +109,8 @@ class LikelihoodCache(object):
         if self.true_params is not None:
             true_params = [self.true_dict[k] for k in list(samples.keys())]
 
-        fig = plot_corner(samples, prob=self.likelihood, true_params=true_params)
-        fig.suptitle(f"Likelihood weighted samples\n(True lnl: {self.true_lnl:.2f})")
+        fig = plot_corner(samples, prob=self.likelihood, true_params=true_params, show_datapoints=show_datapoints)
+        fig.suptitle(f"Likelihood weighted {self.n:,} samples\n(True lnl: {self.true_lnl:.2f})")
         if fname:
             safe_savefig(fig, fname)
         else:
