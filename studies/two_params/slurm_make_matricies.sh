@@ -13,7 +13,7 @@ module load pandas/1.2.2-python-3.8.5
 source /fred/oz980/avajpeyi/envs/compas_venv/bin/activate
 
 make_detection_matrices \
---compas_h5_path /Users/avaj0001/Documents/projects/compas_dev/quasir_compass_blocks/data/COMPAS_Output.h5 \
+--compas_h5_path ../../tests/test_data/Z_all/COMPAS_Output.h5 \
 --outdir out_muz_sigma0 \
 --n 10000 \
 --parameters muz sigma0 \
