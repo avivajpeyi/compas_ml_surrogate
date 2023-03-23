@@ -13,10 +13,7 @@ MODEL_SAVE_FILE = "model.pkl"
 
 class SklearnGPModel(Model):
     def __init__(self):
-        kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
-        self._model = GaussianProcessRegressor(
-            kernel=kernel, random_state=0
-        )  #  copy_X_train=False, normalize_y=True)
+        self._model = None
         self.trained = False
         self.input_dim = None
 
@@ -25,6 +22,7 @@ class SklearnGPModel(Model):
         inputs: np.ndarray,
         outputs: np.ndarray,
         verbose: Optional[bool] = False,
+        savedir: Optional[str] = None,
     ) -> None:
         """Train the model."""
         (
@@ -33,11 +31,18 @@ class SklearnGPModel(Model):
             train_out,
             test_out,
         ) = self._preprocess_and_split_data(inputs, outputs)
+        kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
+
+        # diff between every pair of train_out values
+        err = np.min(np.diff(train_out, axis=0) ** 2)
+
+        self._model = GaussianProcessRegressor(
+            kernel=kernel, random_state=0, copy_X_train=False,
+            n_restarts_optimizer=10, alpha=err
+        )
         self._model.fit(train_in, train_out)
-        self.trained = True
-        self.input_dim = inputs.shape[1]
-        metrics = self.train_test_metrics([train_in, train_out], [test_in, test_out])
-        return metrics
+
+        return self._post_training((train_in, train_out), (test_in, test_out), savedir)
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         """Predict the output of the model for the given input."""
@@ -59,7 +64,8 @@ class SklearnGPModel(Model):
     def load(cls, savedir: str) -> "Model":
         """Load a model from a dir."""
         filename = f"{savedir}/{MODEL_SAVE_FILE}"
-        loaded_model = pickle.load(open(filename, "rb"))
+        with open(filename, "rb") as f:
+            loaded_model = pickle.load(f)
         model = cls()
         model._model = loaded_model
         model.trained = True

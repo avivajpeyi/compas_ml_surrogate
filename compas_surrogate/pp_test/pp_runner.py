@@ -28,16 +28,22 @@ random.seed(1)
 
 
 class PPrunner:
-    def __init__(self, outdir: str, det_matricies_fname: str, n_training: int = 500):
+    def __init__(
+            self,
+            outdir: str, det_matricies_fname: str,
+            n_training: int = 500,
+            n_injections: int = 100,
+    ):
         self.outdir = outdir
         os.makedirs(outdir, exist_ok=True)
         self.det_matricies_fname = det_matricies_fname
         self.n_training = n_training
+        self.n_inj = n_injections
 
     def get_injections(self) -> pd.DataFrame:
         """Get the injection dataframe from the inj file"""
         if not self.inj_file_exists:
-            self.generate_injection_file(n=100)
+            self.generate_injection_file(n=self.n_inj)
         return pd.read_csv(self.inj_file)
 
     @property
@@ -49,6 +55,8 @@ class PPrunner:
         return os.path.isfile(self.inj_file)
 
     def generate_injection_file(self, n=100):
+        """Generate a csv file with n random universe ids"""
+        logger.info(f"Generating injection file with n={n}")
         assert self.inj_file_exists is False, "inj file already exists"
         h5 = h5py.File(self.det_matricies_fname, "r")
         total = len(h5["detection_matricies"])

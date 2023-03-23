@@ -6,6 +6,8 @@ import numpy as np
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
+import matplotlib.pyplot as plt
+from corner import corner
 from compas_surrogate.logger import logger
 
 
@@ -30,16 +32,26 @@ class Model(ABC):
 
     @abstractmethod
     def train(
-        self,
-        inputs: np.ndarray,
-        outputs: np.ndarray,
-        verbose: Optional[bool] = False,
+            self,
+            inputs: np.ndarray,
+            outputs: np.ndarray,
+            verbose: Optional[bool] = False,
+            savedir: Optional[str] = None,
     ) -> Dict[str, "Metrics"]:
         """Train the model.
 
         :return Dict[str, Metrics]: metrics for training and testing
         """
         pass
+
+    def _post_training(self, training_data, testing_data, savedir):
+        """Post training processing."""
+        self.trained = True
+        self.input_dim = training_data[0].shape[1]
+        if savedir:
+            self.save(savedir)
+            self.plot_diagnostics(training_data, testing_data, savedir)
+        return self.train_test_metrics(training_data, testing_data)
 
     def fit(self, inputs, outputs):
         """Alias for train."""
@@ -138,10 +150,73 @@ class Model(ABC):
             "test": self._get_metrics(test_data),
         }
 
-    def plot_training_results(self, train_data, test_data):
+    def plot_diagnostics(self, train_data, test_data, savedir: str = None ):
         """Plot the training results."""
-        pass
 
+        fig, ax = plt.subplots(2, 1, figsize=(5, 8))
+
+        kwgs = dict(
+            model_col="tab:green",
+            train_col="tab:blue",
+            test_col="tab:orange",
+        )
+
+        if self.input_dim == 1:
+            # plot the training data
+            if train_data is not None:
+                self._plot_1d_model(
+                    ax[1], (train_data[0], train_data[1]), kwgs)
+            if test_data is not None:
+                ax[1].plot(test_data[0], test_data[1], "o",
+                           color=kwgs['test_col'], label="Test")
+            ax[1].legend()
+            ax[1].set_title("Input vs Output")
+
+        if train_data is not None:
+            self._plot_prediction_comparison(ax[0], train_data, {"color": kwgs["train_col"], "label": "Train"})
+            datarange = [train_data[1].min(), train_data[1].max()]
+            ax[0].plot(datarange, datarange, "k--", lw=0.5, zorder=-10)
+
+        if test_data is not None:
+            self._plot_prediction_comparison(ax[0], test_data, {"color": kwgs["test_col"], "label": "Test"})
+
+        ax[0].legend()
+        ax[0].set_title("Prediction vs True")
+        fig.tight_layout()
+        if savedir is not None:
+            fig.savefig(f"{savedir}/model_diagnostics.png")
+        return fig
+
+    def _plot_prediction_comparison(self, ax, data, kwgs):
+        """Plot the prediction vs the true values."""
+        color = kwgs.get("color", "tab:blue")
+        label = kwgs.get("label", "Prediction")
+        r2 = self.r_sqred(data)
+        label = f"{label} (R2: {r2})"
+        true_y = data[1].flatten()
+        pred_low, pred_y, pred_up = self(data[0])
+        ax.errorbar(
+            true_y,pred_y, marker="o", linestyle='None',
+            yerr=[pred_y - pred_low, pred_up - pred_y],
+            color=color,
+            label=label,
+            markersize=0,
+            alpha=0.5,
+        )
+        ax.set_xlabel("True")
+        ax.set_ylabel("Predicted")
+        ax.set_aspect("equal", "box")
+
+    def _plot_1d_model(self, ax, train_data, kwgs):
+        """Plot the model in 1D."""
+        xlin = np.linspace(train_data[0].min(), train_data[0].max(), 100)
+        pred_low, pred_y, pred_up = self(xlin.reshape(-1, 1))
+        model_col, data_col = kwgs.get("model_col", "tab:green"), kwgs.get("data_col", "tab:blue")
+        ax.fill_between(xlin, pred_low, pred_up, color=model_col, alpha=0.2)
+        ax.plot(xlin, pred_y, color=model_col, label="Model")
+        ax.plot(train_data[0], train_data[1], "o", color=data_col, label="Training Data")
+        ax.set_xlabel("Input")
+        ax.set_ylabel("Output")
 
 
 class Metrics:

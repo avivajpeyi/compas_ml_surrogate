@@ -22,9 +22,8 @@ WAVELET_F = lambda x: scipy.stats.norm(0.5, 0.15).pdf(x) * np.sin(50 * x)
 
 def train_and_save_model(model_class, data: np.ndarray, model_path: str):
     model = model_class()
-    model.train(data[0], data[1], verbose=True)
+    model.train(data[0], data[1], verbose=True, savedir=model_path)
     preds = model.predict(data[0])
-    model.save(model_path)
     loaded_model = model_class.load(model_path)
     loaded_preds = loaded_model.predict(data[0])
     assert np.allclose(preds, loaded_preds)
@@ -87,7 +86,7 @@ class TestSurrogate(unittest.TestCase):
 
     def gp_model_tester(self, gp_model_class):
         gp_name = gp_model_class.__name__
-        pts = [10]
+        pts = [10, 25, 50]
         test_funcs = [CURVY_F]
         num_f = len(test_funcs)
 

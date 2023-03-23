@@ -31,9 +31,11 @@ class PPresults:
         """Load all results from regex"""
         cred_int = []
         for f in tqdm.tqdm(glob.glob(regex)):
-            r = Result.from_hdf5(f)
+            r = Result.from_json(f)
             ci = {}
-            for p in r.injection_parameters:
+            for p in r.posterior.columns:
+                if p not in r.injection_parameters:
+                    continue
                 post = r.posterior[p]
                 ci[p] = sum(np.array(post < r.injection_parameters[p]) / len(post))
             cred_int.append(ci)

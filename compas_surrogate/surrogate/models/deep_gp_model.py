@@ -22,6 +22,7 @@ class DeepGPModel(Model):
         inputs: np.ndarray,
         outputs: np.ndarray,
         verbose: Optional[bool] = False,
+        savedir: Optional[str] = None,
         log_dir: Optional[str] = "training_logs",
     ) -> None:
         """Train the model."""
@@ -62,8 +63,6 @@ class DeepGPModel(Model):
             self._model.trainable_variables,
             step_callback=monitor,
         )
-        self.trained = True
-        self.input_dim = inputs.shape[1]
 
         self._model.predict = tf.function(
             lambda xnew: self.__train_m_pred(xnew),
@@ -71,6 +70,8 @@ class DeepGPModel(Model):
                 tf.TensorSpec(shape=[None, self.input_dim], dtype=tf.float64)
             ],
         )
+        return self._post_training((train_in, train_out), (test_in, test_out), savedir)
+
 
     def __train_m_pred(self, xnew):
         """Helper function for the predict method while training"""
