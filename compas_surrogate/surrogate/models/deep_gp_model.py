@@ -72,7 +72,6 @@ class DeepGPModel(Model):
         )
         return self._post_training((train_in, train_out), (test_in, test_out), savedir)
 
-
     def __train_m_pred(self, xnew):
         """Helper function for the predict method while training"""
         return self._model.predict_f(xnew, full_cov=False)

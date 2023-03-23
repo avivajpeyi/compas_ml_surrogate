@@ -14,11 +14,11 @@ def _clean_samples(samples: Dict[str, List[float]]) -> Dict[str, List[float]]:
 
 
 def plot_corner(
-        samples: Dict[str, List[float]],
-        prob: Optional[Union[List[float], np.ndarray]] = None,
-        true_params: Optional[List[float]] = None,
-        labels=None,
-        show_datapoints=False,
+    samples: Dict[str, List[float]],
+    prob: Optional[Union[List[float], np.ndarray]] = None,
+    true_params: Optional[List[float]] = None,
+    labels=None,
+    show_datapoints=False,
 ) -> plt.Figure:
     """Plot corner plot weighted by the probability of the samples."""
     kwgs = dict(

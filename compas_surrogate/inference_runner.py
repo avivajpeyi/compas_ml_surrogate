@@ -18,7 +18,7 @@ from .surrogate.surrogate_likelihood import SurrogateLikelihood
 
 
 def get_training_lnl_cache(
-        outdir, n_samp=None, det_matrix_h5=None, universe_id=None, clean=False
+    outdir, n_samp=None, det_matrix_h5=None, universe_id=None, clean=False
 ) -> LikelihoodCache:
     """
     Get the likelihood cache --> used for training the surrogate
@@ -43,7 +43,7 @@ def get_training_lnl_cache(
         if universe_id is None:
             universe_id = random.randint(0, total_n_det_matricies)
         assert (
-                universe_id < total_n_det_matricies
+            universe_id < total_n_det_matricies
         ), f"Universe id {universe_id} is larger than the number of det matricies {total_n_det_matricies}"
         mock_uni = Universe.from_hdf5(h5_file, universe_id)
         mock_population = mock_uni.sample_possible_event_matrix()
@@ -59,12 +59,14 @@ def get_training_lnl_cache(
     lnl_cache.plot(fname=plt_fname, show_datapoints=True)
     if n_samp is not None:
         lnl_cache = lnl_cache.sample(n_samp)
-    lnl_cache.plot(fname=plt_fname.replace(".png", "_training.png"), show_datapoints=True)
+    lnl_cache.plot(
+        fname=plt_fname.replace(".png", "_training.png"), show_datapoints=True
+    )
     return lnl_cache
 
 
 def get_ml_surrogate_model(
-        model_dir, training_data_cache=None, gp_model=SklearnGPModel, clean=False
+    model_dir, training_data_cache=None, gp_model=SklearnGPModel, clean=False
 ):
     """
     Get the ML surrogate model
@@ -95,13 +97,13 @@ def get_ml_surrogate_model(
 
 
 def run_inference(
-        outdir,
-        det_matrix_h5=None,
-        universe_id=None,
-        cache_outdir=None,
-        n=None,
-        clean=False,
-        sampler="dynesty",
+    outdir,
+    det_matrix_h5=None,
+    universe_id=None,
+    cache_outdir=None,
+    n=None,
+    clean=False,
+    sampler="dynesty",
 ) -> bilby.core.result.Result:
     os.makedirs(outdir, exist_ok=True)
 

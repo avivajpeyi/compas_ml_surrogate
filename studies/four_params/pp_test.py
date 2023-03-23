@@ -1,7 +1,7 @@
-from compas_surrogate.pp_test import PPrunner, PPresults
-
-import random
 import datetime
+import random
+
+from compas_surrogate.pp_test import PPresults, PPrunner
 
 # get datetime stamp short version
 now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

@@ -12,6 +12,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from compas_surrogate.inference_runner import run_inference
+
 from ..logger import logger
 
 for l in logging.Logger.manager.loggerDict.keys():
@@ -29,10 +30,11 @@ random.seed(1)
 
 class PPrunner:
     def __init__(
-            self,
-            outdir: str, det_matricies_fname: str,
-            n_training: int = 500,
-            n_injections: int = 100,
+        self,
+        outdir: str,
+        det_matricies_fname: str,
+        n_training: int = 500,
+        n_injections: int = 100,
     ):
         self.outdir = outdir
         os.makedirs(outdir, exist_ok=True)
@@ -61,11 +63,13 @@ class PPrunner:
         h5 = h5py.File(self.det_matricies_fname, "r")
         total = len(h5["detection_matricies"])
         assert n < total, "n must be less than total number of universes"
-        df = pd.DataFrame(dict(
-            universe_id=np.random.randint(0, total, n),
-            analysis_complete=[False for _ in range(n)],
-            runtime=[np.nan for _ in range(n)]
-        ))
+        df = pd.DataFrame(
+            dict(
+                universe_id=np.random.randint(0, total, n),
+                analysis_complete=[False for _ in range(n)],
+                runtime=[np.nan for _ in range(n)],
+            )
+        )
         df.to_csv(self.inj_file, index=False)
 
     def update_inj_status(self, i, runtime: float):
@@ -80,8 +84,10 @@ class PPrunner:
         with contextlib.redirect_stdout(None), contextlib.redirect_stderr(None):
             t0 = time()
             run_inference(
-                outdir=outdir, universe_id=i,
-                n=self.n_training, det_matrix_h5=self.det_matricies_fname
+                outdir=outdir,
+                universe_id=i,
+                n=self.n_training,
+                det_matrix_h5=self.det_matricies_fname,
             )
         self.update_inj_status(i, time() - t0)
 

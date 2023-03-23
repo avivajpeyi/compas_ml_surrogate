@@ -37,8 +37,11 @@ class SklearnGPModel(Model):
         err = np.min(np.diff(train_out, axis=0) ** 2)
 
         self._model = GaussianProcessRegressor(
-            kernel=kernel, random_state=0, copy_X_train=False,
-            n_restarts_optimizer=10, alpha=err
+            kernel=kernel,
+            random_state=0,
+            copy_X_train=False,
+            n_restarts_optimizer=10,
+            alpha=err,
         )
         self._model.fit(train_in, train_out)
 

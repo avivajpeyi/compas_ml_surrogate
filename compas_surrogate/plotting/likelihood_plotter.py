@@ -3,15 +3,16 @@ from typing import Dict, List, Optional, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 from .corner import plot_corner
 
 
 def plot_1d_lnl(
-        params: List[float],
-        lnl: List[float],
-        poisson_lnl: List[float] = [],
-        mcz_lnl: List[float] = [],
-        true_param: Optional[float] = None,
+    params: List[float],
+    lnl: List[float],
+    poisson_lnl: List[float] = [],
+    mcz_lnl: List[float] = [],
+    true_param: Optional[float] = None,
 ):
     """Plot 1d Lnl for a given parameter."""
     set_color = lambda x: ["C0" if xi != max(x) else "C1" for xi in x]
@@ -50,10 +51,10 @@ def plot_1d_lnl(
 
 
 def plot_hacky_1d_lnl(
-        params: pd.DataFrame,
-        lnl: np.ndarray,
-        true_param: Dict[str, float] = {},
-        plt_kwgs={}
+    params: pd.DataFrame,
+    lnl: np.ndarray,
+    true_param: Dict[str, float] = {},
+    plt_kwgs={},
 ):
     # fig with len(params) subplots
     nparams = len(params.columns)
@@ -71,7 +72,7 @@ def plot_hacky_1d_lnl(
         counts = [len(l) for l in lnl_in_bins]
         p_lnl = [np.trapz(l) / c for l, c in zip(lnl_in_bins, counts)]
         unc_lnl = [np.std(l) for l, c in zip(lnl_in_bins, counts)]
-        plt_kwgs['fmt'] = plt_kwgs.get('fmt', 'o')
+        plt_kwgs["fmt"] = plt_kwgs.get("fmt", "o")
         ax[i].errorbar(bins, p_lnl, yerr=unc_lnl, **plt_kwgs)
         ax[i].set_xlabel(param)
         if param in true_param:

@@ -1,8 +1,9 @@
 import os.path
 
-import pytest
-from bilby.core.prior import Uniform, PriorDict, TruncatedGaussian
 import pandas as pd
+import pytest
+from bilby.core.prior import PriorDict, TruncatedGaussian, Uniform
+
 from compas_surrogate.plotting.likelihood_plotter import plot_1d_lnl, plot_hacky_1d_lnl
 
 N = 5000
