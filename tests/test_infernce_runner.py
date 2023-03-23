@@ -16,22 +16,23 @@ def make_test_data(fname=TEST_DATA_FN, compas_h5_path="compas.h5"):
         return fpath
     generate_set_of_matricies(
         compas_h5_path=compas_h5_path,
-        n=10,
+        n=50,
         save_images=False,
         outdir=TEST_DIR,
-        parameters=["aSF"],
+        parameters=["aSF", "dSF"],
         save_h5_fname=TEST_DATA_FN,
     )
     return fpath
 
 
 def test_run_inference(test_datapath, tmp_path):
+    TMP_PATH = "tmp_cache"
     det_matrix_h5 = make_test_data(compas_h5_path=test_datapath)
     run_inference(
         outdir="out",
-        n=5,
-        cache_outdir=tmp_path,
+        n=50,
+        cache_outdir=TMP_PATH,
         det_matrix_h5=det_matrix_h5,
         universe_id=0,
-        clean=False,
+        clean=True,
     )

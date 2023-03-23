@@ -85,13 +85,12 @@ def get_ml_surrogate_model(
             f"Training model {model_dir}: IN[{in_data.shape}]--> OUT[{out_data.shape}]"
         )
         model = gp_model()
-        metrics = model.train(in_data, out_data, verbose=True)
+        metrics = model.train(in_data, out_data, verbose=True, savedir=model_dir)
         logger.info(f"Surrogate metrics: {metrics}")
         pred_lnl = model(training_data_cache.true_param_vals)
         logger.info(
             f"True LnL: {training_data_cache.true_lnl}, Surrogate LnL: {pred_lnl}"
         )
-        model.save(model_dir)
         logger.success("Trained and saved Model")
     return model
 
@@ -147,7 +146,7 @@ def run_inference(
         clean=clean,
         **smplr_kwargs,
     )
-    surr_result.save_to_file(extension="hdf5")
+    surr_result.save_to_file(extension="json")
     fig = surr_result.plot_corner(save=False)
     true_lnl = data_cache.true_lnl
     pred_lnl = model.prediction_str(data_cache.true_param_vals)
