@@ -1,4 +1,5 @@
 import datetime
+import os
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Union
 
@@ -9,6 +10,7 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 from compas_surrogate.logger import logger
+from compas_surrogate.plotting.image_utils import horizontal_concat
 
 
 class Model(ABC):
@@ -153,47 +155,58 @@ class Model(ABC):
     def plot_diagnostics(self, train_data, test_data, savedir: str = None):
         """Plot the training results."""
 
-        fig, ax = plt.subplots(2, 1, figsize=(5, 8))
-
         kwgs = dict(
             model_col="tab:green",
             train_col="tab:blue",
             test_col="tab:orange",
         )
 
-        if self.input_dim == 1:
-            # plot the training data
-            if train_data is not None:
-                self._plot_1d_model(ax[1], (train_data[0], train_data[1]), kwgs)
-            if test_data is not None:
-                ax[1].plot(
-                    test_data[0],
-                    test_data[1],
-                    "o",
-                    color=kwgs["test_col"],
-                    label="Test",
-                )
-            ax[1].legend()
-            ax[1].set_title("Input vs Output")
+        fname1 = f"{savedir}/model_diagnostic_ppc.png"
+        self.plot_model_predictive_check(train_data, test_data, fname1, kwgs)
+        fname2 = f"{savedir}/model_diagnostic_err.png"
+        self.plot_predicted_vs_true(train_data, test_data, fname2, kwgs)
+        horizontal_concat([fname1, fname2], f"{savedir}/model_diagnostic.png")
+        os.remove(fname1)
+        os.remove(fname2)
 
-        if train_data is not None:
-            self._plot_prediction_comparison(
-                ax[0], train_data, {"color": kwgs["train_col"], "label": "Train"}
-            )
-            datarange = [train_data[1].min(), train_data[1].max()]
-            ax[0].plot(datarange, datarange, "k--", lw=0.5, zorder=-10)
-
-        if test_data is not None:
-            self._plot_prediction_comparison(
-                ax[0], test_data, {"color": kwgs["test_col"], "label": "Test"}
-            )
-
-        ax[0].legend()
-        ax[0].set_title("Prediction vs True")
+    def plot_predicted_vs_true(self, train_data, test_data, fname, kwgs):
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+        self._plot_prediction_comparison(
+            ax, train_data, {"color": kwgs["train_col"], "label": "Train"}
+        )
+        datarange = [train_data[1].min(), train_data[1].max()]
+        ax.plot(datarange, datarange, "k--", lw=0.5, zorder=-10)
+        self._plot_prediction_comparison(
+            ax, test_data, {"color": kwgs["test_col"], "label": "Test"}
+        )
+        ax.legend()
+        ax.set_title("Prediction vs True")
         fig.tight_layout()
-        if savedir is not None:
-            fig.savefig(f"{savedir}/model_diagnostics.png")
-        return fig
+        fig.savefig(fname)
+
+    def plot_model_predictive_check(self, train_data, test_data, fname, kwgs):
+        if self.input_dim == 1:
+            fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+            self._plot_1d_model(ax, (train_data[0], train_data[1]), kwgs)
+            ax.plot(
+                test_data[0],
+                test_data[1],
+                "o",
+                color=kwgs["test_col"],
+                label="Test",
+            )
+            ax.legend()
+            ax.set_title("Predictive Check")
+            fig.tight_layout()
+        else:
+
+            # plot the training datapoints and contours plot
+            # overplot the validataion datapoints
+            # plot the predicted contours
+
+            raise ValueError("Cormer plot")
+
+        fig.savefig(fname)
 
     def _plot_prediction_comparison(self, ax, data, kwgs):
         """Plot the prediction vs the true values."""

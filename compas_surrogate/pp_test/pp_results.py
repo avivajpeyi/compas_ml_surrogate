@@ -27,6 +27,25 @@ class PPresults:
         return cls(pd.read_csv(csv))
 
     @classmethod
+    def from_csvs(cls, samples_regex, injection_csv):
+        """Load all results from csv"""
+        cred_int = []
+        injections = pd.read_csv(injection_csv)
+        for f in tqdm.tqdm(glob.glob(samples_regex)):
+            post = pd.read_csv(f)
+            ci = {}
+            # get injection parameters for this sample
+            injection_parameters = (
+                {}
+            )  # TODO: need a way to match the injection parameters to the posteior
+            for p in post.columns:
+                if p not in injection_parameters:
+                    continue
+                ci[p] = sum(np.array(post[p] < injection_parameters[p]) / len(post))
+            cred_int.append(ci)
+        return cls(pd.DataFrame(cred_int))
+
+    @classmethod
     def from_results(cls, regex):
         """Load all results from regex"""
         cred_int = []
