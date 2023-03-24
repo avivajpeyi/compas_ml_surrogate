@@ -10,7 +10,10 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 from compas_surrogate.logger import logger
+from compas_surrogate.plotting.corner import plot_corner
 from compas_surrogate.plotting.image_utils import horizontal_concat
+
+from .utils import plot_model_corner
 
 
 class Model(ABC):
@@ -166,8 +169,8 @@ class Model(ABC):
         fname2 = f"{savedir}/model_diagnostic_err.png"
         self.plot_predicted_vs_true(train_data, test_data, fname2, kwgs)
         horizontal_concat([fname1, fname2], f"{savedir}/model_diagnostic.png")
-        os.remove(fname1)
-        os.remove(fname2)
+        # os.remove(fname1)
+        # os.remove(fname2)
 
     def plot_predicted_vs_true(self, train_data, test_data, fname, kwgs):
         fig, ax = plt.subplots(1, 1, figsize=(4, 4))
@@ -175,7 +178,13 @@ class Model(ABC):
             ax, train_data, {"color": kwgs["train_col"], "label": "Train"}
         )
         datarange = [train_data[1].min(), train_data[1].max()]
-        ax.plot(datarange, datarange, "k--", lw=0.5, zorder=-10)
+        ax.plot(
+            datarange,
+            datarange,
+            "k--",
+            lw=0.1,
+            zorder=-10,
+        )
         self._plot_prediction_comparison(
             ax, test_data, {"color": kwgs["test_col"], "label": "Test"}
         )
@@ -199,14 +208,10 @@ class Model(ABC):
             ax.set_title("Predictive Check")
             fig.tight_layout()
         else:
+            _, pred, _ = self(train_data[0])
+            fig = plot_model_corner(train_data, test_data, pred, kwgs)
 
-            # plot the training datapoints and contours plot
-            # overplot the validataion datapoints
-            # plot the predicted contours
-
-            raise ValueError("Cormer plot")
-
-        fig.savefig(fname)
+        fig.savefig(fname, dpi=500)
 
     def _plot_prediction_comparison(self, ax, data, kwgs):
         """Plot the prediction vs the true values."""
@@ -224,12 +229,11 @@ class Model(ABC):
             yerr=[pred_y - pred_low, pred_up - pred_y],
             color=color,
             label=label,
-            markersize=0,
+            markersize=1,
             alpha=0.5,
         )
         ax.set_xlabel("True")
         ax.set_ylabel("Predicted")
-        ax.set_aspect("equal", "box")
 
     def _plot_1d_model(self, ax, train_data, kwgs):
         """Plot the model in 1D."""

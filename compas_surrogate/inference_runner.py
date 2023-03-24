@@ -3,6 +3,7 @@ import os
 import random
 import shutil
 from glob import glob
+from typing import List, Optional, Union
 
 import bilby
 import h5py
@@ -66,7 +67,10 @@ def get_training_lnl_cache(
 
 
 def get_ml_surrogate_model(
-    model_dir, training_data_cache=None, gp_model=SklearnGPModel, clean=False
+    model_dir: str,
+    training_data_cache: Optional[LikelihoodCache] = None,
+    gp_model=SklearnGPModel,
+    clean=False,
 ):
     """
     Get the ML surrogate model

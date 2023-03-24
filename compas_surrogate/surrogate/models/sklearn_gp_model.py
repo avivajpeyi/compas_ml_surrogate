@@ -16,6 +16,18 @@ class SklearnGPModel(Model):
         self._model = None
         self.trained = False
         self.input_dim = None
+        kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
+
+        # # diff between every pair of train_out values
+        # err = np.min(np.diff(train_out, axis=0) ** 2)
+
+        self._model = GaussianProcessRegressor(
+            kernel=kernel,
+            random_state=0,
+            copy_X_train=False,
+            n_restarts_optimizer=10,
+            # alpha=0,
+        )
 
     def train(
         self,
@@ -41,7 +53,7 @@ class SklearnGPModel(Model):
             random_state=0,
             copy_X_train=False,
             n_restarts_optimizer=10,
-            alpha=err,
+            # alpha=0,
         )
         self._model.fit(train_in, train_out)
 
