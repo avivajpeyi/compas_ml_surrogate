@@ -107,7 +107,9 @@ def generate_set_of_matricies(
     if outdir != ".":
         os.makedirs(outdir, exist_ok=True)
 
-    sf_samples = draw_star_formation_samples(n, parameters=parameters, as_list=True)
+    sf_samples = draw_star_formation_samples(
+        n, parameters=parameters, as_list=True, custom_ranges=None
+    )
 
     logger.info(
         f"Generating matricies (with {get_num_workers()} threads for {n} SF samples with parameters {parameters}"

@@ -7,10 +7,9 @@ from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from sklearn.model_selection import ShuffleSplit, learning_curve
 
-from compas_surrogate.data_generation.likelihood_cacher import LikelihoodCache
-from compas_surrogate.inference_runner import get_training_lnl_cache
-from compas_surrogate.plotting.corner import KWGS
-from compas_surrogate.surrogate.models import SklearnGPModel
+from ...inference_runner import get_training_lnl_cache
+from ...plotting.corner import KWGS
+from . import SklearnGPModel
 
 
 def _get_points_kwgs(color: str, alpha=0.3) -> Dict:

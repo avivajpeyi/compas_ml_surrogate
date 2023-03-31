@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Union
 
 import numpy as np
+import pandas as pd
 
 from compas_surrogate.logger import logger
 from compas_surrogate.plotting import safe_savefig
@@ -133,3 +134,10 @@ class LikelihoodCache(object):
     def true_param_vals(self):
         data = np.array([self.true_dict[k] for k in self.get_varying_param_keys()])
         return data.reshape(1, -1)
+
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        data = self.get_varying_params(ret_dict=True)
+        df = pd.DataFrame(data)
+        df["lnl"] = self.lnl
+        return df

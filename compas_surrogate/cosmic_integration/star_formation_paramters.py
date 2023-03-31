@@ -38,7 +38,7 @@ def get_star_formation_prior(parameters=None) -> PriorDict:
 
 
 def draw_star_formation_samples(
-    n=1000, parameters=None, as_list=False
+    n=1000, parameters=None, as_list=False, custom_ranges=None
 ) -> Union[Dict[str, np.ndarray], List[Dict]]:
     """Draw samples from the star formation parameters."""
     if parameters is None:
@@ -47,7 +47,11 @@ def draw_star_formation_samples(
     num_dim = len(parameters)
     sampler = LatinHypercube(d=num_dim)
     samples = sampler.random(n)
-    parameter_ranges = np.array([STAR_FORMATION_RANGES[p] for p in parameters])
+
+    ranges = STAR_FORMATION_RANGES.copy()
+    if custom_ranges is not None:
+        ranges.update(custom_ranges)
+    parameter_ranges = np.array([ranges[p] for p in parameters])
     lower_bound = parameter_ranges[:, 0]
     upper_bound = parameter_ranges[:, 1]
     scaled_samples = qmc.scale(samples, l_bounds=lower_bound, u_bounds=upper_bound)

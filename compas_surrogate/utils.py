@@ -1,5 +1,6 @@
 from multiprocessing import cpu_count
 
+import numpy as np
 import requests
 from tqdm.auto import tqdm
 
@@ -33,3 +34,12 @@ def get_num_workers():
     elif num_workers < 16:
         num_workers = 4
     return num_workers
+
+
+def exp_norm_scale_log_data(x):
+    """Normalize exp an log-array and scale it between 0 and 1"""
+    x = np.asarray(x)
+    x = np.exp(x - np.max(x))
+    x = x / np.sum(x)
+    x = (x - np.min(x)) / (np.max(x) - np.min(x))
+    return x
