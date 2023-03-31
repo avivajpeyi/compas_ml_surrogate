@@ -90,6 +90,7 @@ def generate_set_of_matricies(
     outdir=".",
     parameters=None,
     save_h5_fname="detection_matricies.h5",
+    custom_ranges=None,
 ):
     """
     Generate a set of COMPAS detection rate matricies
@@ -108,7 +109,7 @@ def generate_set_of_matricies(
         os.makedirs(outdir, exist_ok=True)
 
     sf_samples = draw_star_formation_samples(
-        n, parameters=parameters, as_list=True, custom_ranges=None
+        n, parameters=parameters, as_list=True, custom_ranges=custom_ranges
     )
 
     logger.info(

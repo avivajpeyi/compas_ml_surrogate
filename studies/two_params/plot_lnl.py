@@ -24,7 +24,7 @@ fig, ax = plot_probs(
     cmap="Oranges",
     true_values=true_params,
 )
-fig.show()
+fig.savefig(f"{OUT}/lnl.png", dpi=300)
 
 fig, ax = plot_probs(
     cache_subset["muz"],
@@ -35,4 +35,4 @@ fig, ax = plot_probs(
     true_values=true_params,
     zoom_in=True,
 )
-fig.show()
+fig.savefig(f"{OUT}/lnl_zoom.png", dpi=300)
