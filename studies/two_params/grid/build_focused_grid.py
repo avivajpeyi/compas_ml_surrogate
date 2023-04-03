@@ -19,6 +19,6 @@ generate_set_of_matricies(
     outdir="grid",
     parameters=["muz", "sigma0"],
     save_h5_fname="grid_data.h5",
-    # custom_ranges={"muz": (-0.5, -0.45), "sigma0": (0.12, 0.26)},
+    custom_ranges={"muz": (-0.5, -0.45), "sigma0": (0.12, 0.26)},
     grid_parameterspace=True,
 )

@@ -4,7 +4,7 @@ import pandas as pd
 import scipy
 import seaborn as sns
 from matplotlib.colors import ListedColormap, to_hex, to_rgba
-from scipy.interpolate import griddata
+from scipy.interpolate import Rbf, griddata
 
 sns.set_theme(style="ticks")
 
@@ -31,28 +31,36 @@ def plot_probs(
     x,
     y,
     p,
-    xlabel="x",
-    ylabel="y",
+    xlabel="",
+    ylabel="",
     fname=None,
     levels=SIGMA_LEVELS,
     cmap=CMAP,
     true_values=None,
     zoom_in=False,
+    zoom_range=None,
 ):
     plt.close("all")
 
     fig, axes = plt.subplots(1, 1, figsize=(4, 4))
     ax = axes
 
-    if true_values and zoom_in:
-        xrange = max(x) - min(x)
-        yrange = max(y) - min(y)
+    if zoom_range is not None:
+        zoom_in = True
 
-        # center around true values
-        x_min = true_values[0] - 0.2 * xrange
-        x_max = true_values[0] + 0.2 * xrange
-        y_min = true_values[1] - 0.2 * yrange
-        y_max = true_values[1] + 0.2 * yrange
+    if true_values and zoom_in:
+
+        if zoom_range is None:
+            xrange = max(x) - min(x)
+            yrange = max(y) - min(y)
+
+            # center around true values
+            x_min = true_values[0] - 0.2 * xrange
+            x_max = true_values[0] + 0.2 * xrange
+            y_min = true_values[1] - 0.2 * yrange
+            y_max = true_values[1] + 0.2 * yrange
+        else:
+            x_min, x_max, y_min, y_max = zoom_range
 
         # filter data to region
         mask = (x > x_min) & (x < x_max) & (y > y_min) & (y < y_max)
@@ -113,10 +121,11 @@ def get_alpha_colormap(hex_color, level=SIGMA_LEVELS):
     return (to_hex((rbga[0], rbga[1], rbga[2], l), True) for l in level)
 
 
-def array_to_meshgrid(x, y, z, method="cubic", resolution=1000):
+def array_to_meshgrid(x, y, z, method="cubic", resolution=50):
     gridx, gridy = np.mgrid[
         min(x) : max(x) : complex(resolution), min(y) : max(y) : complex(resolution)
     ]
     points = [(xi, yi) for xi, yi in zip(x, y)]
     gridz = griddata(points, z, (gridx, gridy), method=method)
+
     return gridx, gridy, gridz

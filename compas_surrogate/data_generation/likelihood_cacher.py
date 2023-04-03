@@ -91,7 +91,12 @@ def compute_and_cache_lnl(
 
 
 def get_training_lnl_cache(
-    outdir, n_samp=None, det_matrix_h5=None, universe_id=None, clean=False
+    outdir,
+    n_samp=None,
+    det_matrix_h5=None,
+    universe_id=None,
+    mock_uni=None,
+    clean=False,
 ) -> LikelihoodCache:
     """
     Get the likelihood cache --> used for training the surrogate
@@ -113,12 +118,17 @@ def get_training_lnl_cache(
         os.makedirs(outdir, exist_ok=True)
         h5_file = h5py.File(det_matrix_h5, "r")
         total_n_det_matricies = len(h5_file["detection_matricies"])
-        if universe_id is None:
-            universe_id = random.randint(0, total_n_det_matricies)
-        assert (
-            universe_id < total_n_det_matricies
-        ), f"Universe id {universe_id} is larger than the number of det matricies {total_n_det_matricies}"
-        mock_uni = Universe.from_hdf5(h5_file, universe_id)
+
+        if mock_uni is None:
+            if universe_id is None:
+                universe_id = random.randint(0, total_n_det_matricies)
+            assert (
+                universe_id < total_n_det_matricies
+            ), f"Universe id {universe_id} is larger than the number of det matricies {total_n_det_matricies}"
+            mock_uni = Universe.from_hdf5(h5_file, universe_id)
+        else:
+            assert isinstance(mock_uni, Universe)
+
         mock_population = mock_uni.sample_possible_event_matrix()
         mock_population.plot(save=True, outdir=outdir)
         logger.info(

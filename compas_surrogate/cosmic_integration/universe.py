@@ -2,7 +2,7 @@ import io
 import os
 import time
 from contextlib import redirect_stdout
-from typing import Optional
+from typing import Optional, Union
 
 import h5py
 import matplotlib.pyplot as plt
@@ -214,7 +214,7 @@ class Universe:
         return uni
 
     @classmethod
-    def from_hdf5(cls, h5file: h5py.File, idx: int):
+    def from_hdf5(cls, h5file: Union[h5py.File, str], idx: int):
         """Create a Universe object from a hdf5 file (dont run cosmic integrator)"""
         data = {}
         common_keys = [
@@ -223,6 +223,12 @@ class Universe:
             "redshifts",
             "chirp_masses",
         ]
+
+        h5file_opened = False
+        if isinstance(h5file, str):
+            h5file = h5py.File(h5file, "r")
+            h5file_opened = True
+
         for key in common_keys:
             data[key] = h5file.attrs[key]
         data["detection_rate"] = h5file["detection_matricies"][idx]
@@ -232,6 +238,10 @@ class Universe:
         data["sigma0"] = params[5]
         uni = cls(**data)
         logger.debug(f"Loaded cached uni with: {uni.param_str}")
+
+        if h5file_opened:
+            h5file.close()
+
         return uni
 
     @property
@@ -340,7 +350,7 @@ class Universe:
         return os.path.join(outdir, f"{fname}.{ext}")
 
     def bin_detection_rate(
-        self, num_mc_bins: Optional[int] = 51, num_z_bins: Optional[int] = 101
+        self, num_mc_bins: Optional[int] = 51, num_z_bins: Optional[int] = 101, frac=1.0
     ):
 
         binned_data = self.detection_rate.copy()
