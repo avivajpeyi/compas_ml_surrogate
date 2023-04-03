@@ -31,6 +31,8 @@ def get_num_workers():
     num_workers = cpu_count()
     if num_workers > 64:
         num_workers = 16
+    elif num_workers > 32:
+        num_workers = 8
     elif num_workers < 16:
         num_workers = 4
     return num_workers
