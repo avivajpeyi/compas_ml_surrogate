@@ -17,6 +17,8 @@ def test_sampler(tmp_path):
 
     samples_30 = pd.DataFrame(draw_star_formation_samples(30, parameters, as_list=True))
 
+    samples_grid = pd.DataFrame(draw_star_formation_samples(50, parameters, grid=True))
+
     if PLOT:
         import matplotlib.pyplot as plt
 
@@ -33,6 +35,14 @@ def test_sampler(tmp_path):
             ".",
             color="tab:blue",
             zorder=1,
+        )
+        plt.plot(
+            samples_grid["aSF"],
+            samples_grid["dSF"],
+            "s",
+            color="tab:green",
+            zorder=1,
+            alpha=0.5,
         )
         plt.grid()
         plt.savefig(os.path.join(tmp_path, "test_sf_samples.png"))

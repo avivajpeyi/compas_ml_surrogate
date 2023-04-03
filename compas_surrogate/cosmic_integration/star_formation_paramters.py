@@ -38,15 +38,13 @@ def get_star_formation_prior(parameters=None) -> PriorDict:
 
 
 def draw_star_formation_samples(
-    n=1000, parameters=None, as_list=False, custom_ranges=None
+    n=1000, parameters=None, as_list=False, custom_ranges=None, grid=False
 ) -> Union[Dict[str, np.ndarray], List[Dict]]:
     """Draw samples from the star formation parameters."""
     if parameters is None:
         parameters = list(STAR_FORMATION_RANGES.keys())
     assert all([p in STAR_FORMATION_RANGES for p in parameters]), "Invalid parameters"
     num_dim = len(parameters)
-    sampler = LatinHypercube(d=num_dim)
-    samples = sampler.random(n)
 
     ranges = STAR_FORMATION_RANGES.copy()
     if custom_ranges is not None:
@@ -54,8 +52,20 @@ def draw_star_formation_samples(
     parameter_ranges = np.array([ranges[p] for p in parameters])
     lower_bound = parameter_ranges[:, 0]
     upper_bound = parameter_ranges[:, 1]
-    scaled_samples = qmc.scale(samples, l_bounds=lower_bound, u_bounds=upper_bound)
-    dict_of_params = {p: scaled_samples[:, i] for i, p in enumerate(parameters)}
+
+    if grid:
+        n_per_dim = int(np.ceil(n ** (1 / num_dim)))
+        grid = np.meshgrid(*[np.linspace(*r, n_per_dim) for r in parameter_ranges])
+        samples = np.vstack([g.ravel() for g in grid]).T
+
+    else:
+        sampler = LatinHypercube(d=num_dim)
+        unscaled_samples = sampler.random(n)
+        samples = qmc.scale(
+            unscaled_samples, l_bounds=lower_bound, u_bounds=upper_bound
+        )
+
+    dict_of_params = {p: samples[:, i] for i, p in enumerate(parameters)}
     if as_list:
         return [dict(zip(dict_of_params, t)) for t in zip(*dict_of_params.values())]
     return dict_of_params
