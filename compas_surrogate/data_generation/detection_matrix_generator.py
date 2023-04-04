@@ -4,6 +4,7 @@ import glob
 import os
 
 import h5py
+import pandas as pd
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
 
@@ -17,7 +18,11 @@ from compas_surrogate.plotting.gif_generator import make_gif
 from compas_surrogate.utils import get_num_workers
 
 
-def generate_matrix(compas_h5_path, sf_sample, save_images=False, outdir="."):
+def generate_matrix(compas_h5_path, sf_sample, save_images=False, outdir=".", fname=""):
+    """Generate a detection matrix for a given set of star formation parameters"""
+    if os.path.isfile(fname):
+        logger.debug(f"Skipping {fname} as it already exists")
+        return
     SF = [
         sf_sample.get("aSF", DEFAULT_SF_PARAMETERS["aSF"]),
         DEFAULT_SF_PARAMETERS["bSF"],
@@ -29,7 +34,7 @@ def generate_matrix(compas_h5_path, sf_sample, save_images=False, outdir="."):
     sf_params = dict(SF=SF, muz=muz, sigma0=sigma0)
     uni = Universe.simulate(compas_h5_path, **sf_params)
     binned_uni = uni.bin_detection_rate()
-    binned_uni.save(outdir=outdir)
+    binned_uni.save(outdir=outdir, fname=fname)
 
     if save_images:
         uni.plot_detection_rate_matrix(outdir=outdir)
@@ -116,13 +121,17 @@ def generate_set_of_matricies(
         custom_ranges=custom_ranges,
         grid=grid_parameterspace,
     )
+    # save sf samples list
+    pd.DataFrame(sf_samples).to_csv(os.path.join(outdir, "sf_samples.csv"))
+    fnames = [f"{outdir}/uni_{i}.npz" for i in range(n)]
 
+    n_proc = get_num_workers()
     logger.info(
-        f"Generating matricies (with {get_num_workers()} threads for {n} SF samples with parameters {parameters}"
+        f"Generating matricies (with {n_proc} threads for {n} SF samples with parameters {parameters}"
     )
 
-    args = ([compas_h5_path] * n, sf_samples, [save_images] * n, [outdir] * n)
-    process_map(generate_matrix, *args, max_workers=get_num_workers(), chunksize=10)
+    args = ([compas_h5_path] * n, sf_samples, [save_images] * n, [outdir] * n, fnames)
+    process_map(generate_matrix, *args, max_workers=n_proc, chunksize=n_proc)
 
     if save_images:
         logger.info("Making GIFs")

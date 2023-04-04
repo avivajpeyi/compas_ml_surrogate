@@ -16,9 +16,9 @@ generate_set_of_matricies(
     compas_h5_path=compas_h5_path,
     n=10000,
     save_images=False,
-    outdir="grid_focused",
+    outdir="grid_focused2",
     parameters=["muz", "sigma0"],
-    save_h5_fname="focused_data.h5",
-    custom_ranges={"muz": (-0.5, -0.45), "sigma0": (0.12, 0.26)},
+    save_h5_fname="focused_data2.h5",
+    custom_ranges={"muz": (-0.46, -0.45), "sigma0": (0.20, 0.21)},
     grid_parameterspace=True,
 )

@@ -40,7 +40,9 @@ def get_star_formation_prior(parameters=None) -> PriorDict:
 def draw_star_formation_samples(
     n=1000, parameters=None, as_list=False, custom_ranges=None, grid=False
 ) -> Union[Dict[str, np.ndarray], List[Dict]]:
-    """Draw samples from the star formation parameters."""
+    """Draw samples from the star formation parameters.
+    Returns a dictionary of arrays, or a list of dictionaries if as_list is True.
+    """
     if parameters is None:
         parameters = list(STAR_FORMATION_RANGES.keys())
     assert all([p in STAR_FORMATION_RANGES for p in parameters]), "Invalid parameters"

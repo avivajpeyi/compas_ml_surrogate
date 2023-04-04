@@ -6,6 +6,7 @@ __pycache__
 output
 *idea
 venv
+*.csv
 .mypy_cache
 *_version.py
 *.egg-info

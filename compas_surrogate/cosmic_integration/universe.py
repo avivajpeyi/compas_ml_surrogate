@@ -95,6 +95,7 @@ class Universe:
         SF=None,
         muz=DEFAULT["muz"],
         sigma0=DEFAULT["sigma0"],
+        outdir=".",
     ):
         """Create a Universe object from a COMPAS h5 file (run cosmic integrator)"""
         if SF is None:
@@ -430,6 +431,16 @@ class Universe:
         sigma0 = f"sigma0_{self.sigma0}"
         label = f"uni_n{num}_{sf}_{muz}_{sigma0}"
         if self.binned:
+            label = f"binned_{label}"
+        return label
+
+    @staticmethod
+    def create_label(n_systems, SF, muz, sigma0, binned=False):
+        sf = "sf_" + "_".join(np.array(SF).astype(str))
+        muz = f"muz_{muz}"
+        sigma0 = f"sigma0_{sigma0}"
+        label = f"uni_n{n_systems}_{sf}_{muz}_{sigma0}"
+        if binned:
             label = f"binned_{label}"
         return label
 
