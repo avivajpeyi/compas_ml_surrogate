@@ -114,22 +114,33 @@ def generate_set_of_matricies(
     if outdir != ".":
         os.makedirs(outdir, exist_ok=True)
 
-    sf_samples = draw_star_formation_samples(
-        n,
-        parameters=parameters,
-        as_list=True,
-        custom_ranges=custom_ranges,
-        grid=grid_parameterspace,
-    )
-    # save sf samples list
-    pd.DataFrame(sf_samples).to_csv(os.path.join(outdir, "sf_samples.csv"))
-    fnames = [f"{outdir}/uni_{i}.npz" for i in range(n)]
+    sf_sample_fname = os.path.join(outdir, "sf_samples.csv")
+    if os.path.isfile(sf_sample_fname):
+        sf_samples = pd.read_csv(sf_sample_fname)
+        n = len(sf_samples)
+        logger.info(f"Loading {n} SF samples from {sf_sample_fname}")
+        sf_samples = sf_samples[parameters]
+        # convert to List[Dict]
+        sf_samples = sf_samples.to_dict("records")
+    else:
+        sf_samples = draw_star_formation_samples(
+            n,
+            parameters=parameters,
+            as_list=True,
+            custom_ranges=custom_ranges,
+            grid=grid_parameterspace,
+        )
+        # save sf samples list
+        pd.DataFrame(sf_samples).to_csv(
+            os.path.join(outdir, "sf_samples.csv"), index=False
+        )
 
     n_proc = get_num_workers()
     logger.info(
         f"Generating matricies (with {n_proc} threads for {n} SF samples with parameters {parameters}"
     )
 
+    fnames = [f"{outdir}/uni_{i}.npz" for i in range(n)]
     args = ([compas_h5_path] * n, sf_samples, [save_images] * n, [outdir] * n, fnames)
     process_map(generate_matrix, *args, max_workers=n_proc, chunksize=n_proc)
 

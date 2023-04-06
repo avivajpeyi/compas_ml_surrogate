@@ -407,22 +407,6 @@ class Universe:
 
         return df
 
-    def save(self, outdir=".", fname="") -> str:
-        """Save the Universe object to a npz file, return the filename"""
-        if fname == "":
-            fname = self._get_fname(outdir)
-
-        if outdir == "." and os.path.dirname(fname) != "":
-            outdir = os.path.dirname(fname)
-
-        if outdir != ".":
-            os.makedirs(outdir, exist_ok=True)
-
-        data = {k: np.asarray(v) for k, v in self.__dict__().items()}
-
-        np.savez(fname, **data)
-        return fname
-
     @property
     def label(self):
         num = self.n_systems
@@ -447,6 +431,22 @@ class Universe:
     @property
     def zmc_extents(self):
         return Z_RANGE + MC_RANGE
+
+    def save(self, outdir=".", fname="") -> str:
+        """Save the Universe object to a npz file, return the filename"""
+        if fname == "":
+            fname = self._get_fname(outdir)
+
+        if outdir == "." and os.path.dirname(fname) != "":
+            outdir = os.path.dirname(fname)
+
+        if outdir != ".":
+            os.makedirs(outdir, exist_ok=True)
+
+        data = {k: np.asarray(v) for k, v in self.__dict__().items()}
+
+        np.savez(fname, **data)
+        return fname
 
     def __dict__(self):
         """Return a dictionary of the Universe object"""
