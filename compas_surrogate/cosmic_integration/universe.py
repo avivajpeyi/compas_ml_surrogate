@@ -4,6 +4,7 @@ import time
 from contextlib import redirect_stdout
 from typing import Optional, Union
 
+import emcee
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +14,7 @@ from compas_python_utils.cosmic_integration.FastCosmicIntegration import (
     find_detection_rate,
 )
 from matplotlib.gridspec import GridSpec
+from matplotlib.ticker import FormatStrFormatter, LinearLocator
 from scipy.interpolate import RectBivariateSpline
 
 from compas_surrogate.cosmic_integration.star_formation_paramters import (
@@ -41,7 +43,9 @@ class MockPopulation:
     def plot(self, save=True, outdir="."):
         fig = self.universe.plot_detection_rate_matrix(save=False, titles=False)
         axes = fig.get_axes()
-        axes[0].scatter(self.mcz[:, 1], self.mcz[:, 0], s=100, c="skyblue", marker="*")
+        axes[0].scatter(
+            self.mcz[:, 1], self.mcz[:, 0], s=15, c="dodgerblue", marker="*", alpha=0.95
+        )
         uni_fname = self.universe._get_fname(outdir, extra="mock_events", ext="png")
         if save:
             safe_savefig(fig, uni_fname)
@@ -259,7 +263,12 @@ class Universe:
         return ["aSF", "bSF", "cSF", "dSF", "muz", "sigma0"]
 
     def plot_detection_rate_matrix(
-        self, save=True, outdir=".", smoothed_2d_data=False, titles=True
+        self,
+        save=True,
+        outdir=".",
+        smoothed_2d_data=False,
+        titles=True,
+        imshow=False,
     ):
         os.makedirs(outdir, exist_ok=True)
         title_txt = f"Detection Rate Matrix ({self.n_systems} systems)\n"
@@ -284,23 +293,35 @@ class Universe:
         ax_top = fig.add_subplot(gs[0, 0:3])
         ax_right = fig.add_subplot(gs[1:4, 3])
 
-        ax_2d.imshow(
-            rate2d,
-            cmap=plt.cm.hot,
-            norm="linear",
-            vmin=np.quantile(rate2d, 0.5),
-            vmax=np.quantile(rate2d, 0.99),
-            aspect="auto",
-            interpolation="gaussian",
-            origin="lower",
-            extent=self.zmc_extents,
-        )
+        if not imshow:
+            zz, mcc = np.meshgrid(z, mc)
+            cbar = ax_2d.pcolormesh(
+                zz,
+                mcc,
+                rate2d,
+                cmap=plt.cm.hot,
+                norm="linear",
+                # vmin=np.quantile(rate2d, 0.5),
+                # vmax=np.quantile(rate2d, 0.99),
+            )
+        else:
+            cbar = ax_2d.imshow(
+                rate2d,
+                cmap=plt.cm.hot,
+                norm="linear",
+                vmin=np.quantile(rate2d, 0.5),
+                vmax=np.quantile(rate2d, 0.99),
+                aspect="auto",
+                interpolation="gaussian",
+                origin="lower",
+                extent=self.zmc_extents,
+            )
 
         if titles:
             fig.suptitle(title_txt)
             ax_top.set_title(self.param_str, fontsize=7)
         ax_2d.set_xlabel("Redshift")
-        ax_2d.set_ylabel("Chirp mass")
+        ax_2d.set_ylabel("Chirp mass ($M_{\odot}$)")
         ax_2d.set_facecolor("black")
         annote = f"Grid: {rate2d.T.shape}\nN det: {self.n_detections(duration=1)}/yr"
         ax_2d.annotate(
@@ -333,8 +354,25 @@ class Universe:
         ax_2d.set_xlim(*Z_RANGE)
 
         # remove space between subplots
-
         fig.subplots_adjust(hspace=0, wspace=0)
+
+        cbar_ax = fig.add_axes([0.9, 0.1, 0.02, 0.6])
+        fig.colorbar(
+            cbar,
+            cax=cbar_ax,
+            orientation="vertical",
+            label="Rate (yr$^{-1}$)",
+            aspect=5,
+        )
+        cbar_ax.tick_params(labelsize=8, length=0)
+        cbar_ax.yaxis.set_major_locator(LinearLocator(2))
+        # foramt tick labels to 2 decimal places
+        cbar_ax.yaxis.set_major_formatter(FormatStrFormatter("%.2f"))
+        cbar_ax.yaxis.set_ticks_position("left")
+
+        # set all cbar_ax spline color to white
+        for spine in cbar_ax.spines.values():
+            spine.set_edgecolor("white")
 
         if save:
             fname = self._get_fname(outdir, extra="det_matrix", ext="png")
@@ -464,18 +502,29 @@ class Universe:
     def __repr__(self):
         return f"<Universe: [{self.n_systems} systems], {self.param_str}>"
 
-    def sample_observations(self, n_obs: int = None) -> np.ndarray:
+    def sample_observations(
+        self,
+        n_obs: int = None,
+        sample_using_detection_rate_as_weights: bool = True,
+        sample_using_emcee: bool = False,
+    ) -> np.ndarray:
         if n_obs is None:
             n_obs = self.n_detections()
-        df = self.get_detection_rate_dataframe()
-        df = df.sort_values("rate", ascending=False)
-        if np.sum(df.rate) > 0:
-            n_events = df.sample(weights=df.rate, n=n_obs, random_state=0)
-        else:
-            n_events = df.sample(n=n_obs, random_state=0)
-        return n_events[["mc", "z"]].values
+        if sample_using_detection_rate_as_weights:
+            df = self.get_detection_rate_dataframe()
+            df = df.sort_values("rate", ascending=False)
+            if np.sum(df.rate) > 0:
+                n_events = df.sample(weights=df.rate, n=n_obs, random_state=0)
+            else:
+                n_events = df.sample(n=n_obs, random_state=0)
+            return n_events[["mc", "z"]].values
+        elif sample_using_emcee:
+            raise NotImplementedError
 
-    def sample_possible_event_matrix(self, n_obs: int = None) -> MockPopulation:
+    def sample_possible_event_matrix(
+        self,
+        n_obs: int = None,
+    ) -> MockPopulation:
         """Make a fake detection matrix with the same shape as the universe"""
         # FIXME: draw from the detection rate distribution using poisson distributions
         if n_obs is None:
