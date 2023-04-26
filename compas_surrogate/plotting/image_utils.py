@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 import numpy as np
@@ -34,11 +35,20 @@ def make_same_height(image_list):
     return [np.asarray(i) for i in resized]
 
 
-def horizontal_concat(png_list: List[str], savefn: str):
+def horizontal_concat(png_list: List[str], savefn: str, rm_orig=False):
     im = Image.fromarray(np.hstack(make_same_height(png_list)))
     im.save(savefn, dpi=im.size)
+    if rm_orig:
+        remove_files(png_list)
 
 
-def vertical_concat(png_list: List[str], savefn: str):
+def vertical_concat(png_list: List[str], savefn: str, rm_orig=False):
     im = Image.fromarray(np.vstack(make_same_width(png_list)))
     im.save(savefn, dpi=im.size)
+    if rm_orig:
+        remove_files(png_list)
+
+
+def remove_files(file_list):
+    for f in file_list:
+        os.remove(f)

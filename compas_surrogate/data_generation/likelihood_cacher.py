@@ -65,15 +65,23 @@ def compute_and_cache_lnl(
 
     logger.info(f"Starting LnL computation for {n} universes")
 
-    lnl_and_param_list = np.array(
-        process_map(
-            *args,
-            desc="Computing likelihoods",
-            max_workers=get_num_workers(),
-            chunksize=100,
-            total=n,
+    try:
+        lnl_and_param_list = np.array(
+            process_map(
+                *args,
+                desc="Computing likelihoods",
+                max_workers=get_num_workers(),
+                chunksize=100,
+                total=n,
+            )
         )
-    )
+    except Exception as e:
+        lnl_and_param_list = np.array(
+            [
+                _get_lnl_and_param_from_h5(h5_path, i, mock_population.mcz)
+                for i in tqdm(range(n))
+            ]
+        )
     true_lnl = ln_likelihood(
         mcz_obs=mock_population.mcz,
         model_prob_func=mock_population.universe.prob_of_mcz,
