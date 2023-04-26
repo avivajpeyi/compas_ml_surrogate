@@ -14,12 +14,11 @@ else:
 
 generate_set_of_matricies(
     compas_h5_path=compas_h5_path,
-    n=100,
+    n=10000,
     save_images=False,
-    outdir="aSF_grid",
-    parameters=[
-        "aSF",
-    ],
-    save_h5_fname="aSF_grid_data.h5",
+    outdir="grid",
+    parameters=["muz", "sigma0"],
+    save_h5_fname="grid_data.h5",
+    # custom_ranges={"muz": (-0.5, -0.45), "sigma0": (0.12, 0.26)},
     grid_parameterspace=True,
 )
