@@ -22,6 +22,7 @@ def get_num_binaries(compas_h5_filepath):
 @click.argument("--outdir", type=str)
 @click.option("--n_copies", type=int, default=10)
 def generate_datasets(in_compas_h5: str, outdir: str, n_copies: int = 10):
+    print("starting")
     np.random.seed(0)
     if os.path.exists(outdir):
         shutil.rmtree(outdir)
