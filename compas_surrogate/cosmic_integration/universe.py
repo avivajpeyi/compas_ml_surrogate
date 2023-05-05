@@ -101,7 +101,13 @@ class Universe:
         sigma0=DEFAULT["sigma0"],
         outdir=".",
     ):
-        """Create a Universe object from a COMPAS h5 file (run cosmic integrator)"""
+        """Create a Universe object from a COMPAS h5 file (run cosmic integrator)
+
+        Requires the COMPAS h5 file to have the following datasets:
+            BSE_Common_Envelopes
+            BSE_Double_Compact_Objects
+            BSE_System_Parameters
+        """
         if SF is None:
             SF = [
                 DEFAULT["aSF"],
@@ -163,6 +169,7 @@ class Universe:
                 snr_step=0.1,
             )
             runtime = time.time() - start_time
+        logger.debug(f"Cosmic integrator logs:\n{trap.getvalue()}")
 
         sorted_idx = np.argsort(COMPAS.mChirp)
         chirp_masses = COMPAS.mChirp[sorted_idx]

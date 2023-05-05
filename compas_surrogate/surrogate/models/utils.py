@@ -9,7 +9,6 @@ from sklearn.model_selection import ShuffleSplit, learning_curve
 
 from ...inference_runner import get_training_lnl_cache
 from ...plotting.corner import KWGS
-from . import SklearnGPModel
 
 
 def _get_points_kwgs(color: str, alpha=0.3) -> Dict:

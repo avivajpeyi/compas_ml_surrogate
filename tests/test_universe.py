@@ -27,3 +27,4 @@ def test_universe(test_datapath, tmp_path):
             duration=2,
             loop=True,
         )
+    assert False
