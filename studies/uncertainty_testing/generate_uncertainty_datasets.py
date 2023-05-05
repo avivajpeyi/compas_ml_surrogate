@@ -1,7 +1,6 @@
 import os
 import shutil
 
-import click
 import h5py
 import numpy as np
 from compas_python_utils.h5sample import sample_h5
@@ -17,10 +16,6 @@ def get_num_binaries(compas_h5_filepath):
         return len(compas_h5_file[DCO_KEY]["SEED"])
 
 
-@click.command()
-@click.argument("--in_compas_h5", type=str)
-@click.argument("--outdir", type=str)
-@click.option("--n_copies", type=int, default=10)
 def generate_datasets(in_compas_h5: str, outdir: str, n_copies: int = 10):
     print("starting")
     np.random.seed(0)
@@ -38,3 +33,8 @@ def generate_datasets(in_compas_h5: str, outdir: str, n_copies: int = 10):
             in_compas_h5, out_compas_h5, n=sampled_n, replace=False, seed_group=DCO_KEY
         )
         logger.info(f"{out_compas_h5} ({os.stat(out_compas_h5).st_size/1e9:.2f} GB)")
+
+
+generate_datasets(
+    "/fred/oz101/alej_runs/Z_all/COMPAS_Output.h5", "sampled_datasets", 10
+)
