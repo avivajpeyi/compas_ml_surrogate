@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=sample_datasets
 #SBATCH --time=2:00:00
-#SBATCH --output=sampled_datasets/log.log
+#SBATCH --output=samplinglog.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem-per-cpu=10G
@@ -12,4 +12,4 @@ module unload zlib
 module load pandas/1.2.2-python-3.8.5
 source /fred/oz980/avajpeyi/envs/compas_venv/bin/activate
 
-python generate_uncertainty_datasets.py --in_compas_h5 "/fred/oz101/alej_runs/Z_all/COMPAS_Output.h5" --outdir "sampled_datasets" --n_copies 10
+python generate_uncertainty_datasets.py
