@@ -81,9 +81,8 @@ class LikelihoodCache(object):
         return dict(zip(param_names, self.true_params))
 
     @property
-    def likelihood(self):
-        l = np.exp(self.lnl)
-        return l / np.sum(l)
+    def normed_likelihood(self):
+        return np.exp(self.lnl - np.max(self.lnl))
 
     def save(self, npz_fn: str):
         """Save likelihood cache to npz file"""
@@ -111,7 +110,7 @@ class LikelihoodCache(object):
 
         fig = plot_corner(
             samples,
-            prob=self.likelihood,
+            prob=self.normed_likelihood,
             true_params=true_params,
             show_datapoints=show_datapoints,
         )

@@ -3,6 +3,8 @@ import os
 
 import click
 import numpy as np
+from tqdm.auto import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from compas_surrogate.data_generation.detection_matrix_generator import (
     generate_set_of_matricies,
@@ -24,20 +26,25 @@ def make_matricies_for_different_results(compas_file_regex, outdir, n=10):
 
     os.makedirs(outdir, exist_ok=True)
 
-    for i, f in enumerate(compas_files):
-        logger.info(f"Generating matrix for {f}")
-        label = os.path.basename(f).split(".h5")[0].split("_")[-1]
+    with logging_redirect_tqdm():
+        for i, f in tqdm(
+            enumerate(compas_files),
+            total=len(compas_files),
+            desc="Generating matricies",
+        ):
+            logger.info(f"Generating matrix for {f}")
+            label = os.path.basename(f).split(".h5")[0].split("_")[-1]
 
-        generate_set_of_matricies(
-            compas_h5_path=f,
-            n=n,
-            save_images=False,
-            outdir=os.path.join(outdir, f"out_{label}"),
-            parameters=["muz", "sigma0"],
-            save_h5_fname=f"{outdir}/matricies_{label}.h5",
-            custom_ranges={"muz": (-0.48, -0.45), "sigma0": (0.17, 0.24)},
-            grid_parameterspace=True,
-        )
+            generate_set_of_matricies(
+                compas_h5_path=f,
+                n=n,
+                save_images=False,
+                outdir=os.path.join(outdir, f"out_{label}"),
+                parameters=["muz"],
+                save_h5_fname=f"{outdir}/matricies_{label}.h5",
+                custom_ranges={"muz": (-0.48, -0.45)},
+                grid_parameterspace=True,
+            )
 
 
 if __name__ == "__main__":
