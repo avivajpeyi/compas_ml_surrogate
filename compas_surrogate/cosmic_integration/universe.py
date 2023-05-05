@@ -2,7 +2,7 @@ import io
 import os
 import time
 from contextlib import redirect_stdout
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 import emcee
 import h5py
@@ -27,29 +27,102 @@ MC_RANGE = [1, 40]
 Z_RANGE = [0, 0.6]
 O2_DURATION = 0.5  # in yrs
 
+CMAP = "inferno"
+
 
 class MockPopulation:
     def __init__(self, rate2d, mcz, universe):
         self.rate2d = rate2d
         self.mcz = mcz
         self.universe = universe
-        self.muz = universe.muz
-        self.sigma0 = universe.sigma0
-        self.aSF = universe.SF[0]
-        self.bSF = universe.SF[1]
-        self.cSF = universe.SF[2]
-        self.dSF = universe.SF[3]
+        self.muz: float = universe.muz
+        self.sigma0: float = universe.sigma0
+        self.aSF: float = universe.SF[0]
+        self.bSF: float = universe.SF[1]
+        self.cSF: float = universe.SF[2]
+        self.dSF: float = universe.SF[3]
 
-    def plot(self, save=True, outdir="."):
+    @property
+    def n_events(self) -> int:
+        return len(self.mcz)
+
+    def plot(self, save=True, outdir=".", fname=""):
         fig = self.universe.plot_detection_rate_matrix(save=False, titles=False)
         axes = fig.get_axes()
         axes[0].scatter(
             self.mcz[:, 1], self.mcz[:, 0], s=15, c="dodgerblue", marker="*", alpha=0.95
         )
-        uni_fname = self.universe._get_fname(outdir, extra="mock_events", ext="png")
-        if save:
-            safe_savefig(fig, uni_fname)
+        fig.suptitle(f"Mock population ({self.n_events} blue stars)")
+        axes[1].set_title(self.universe.param_str, fontsize=7)
+        if save or fname:
+            if fname == "":
+                fname = self.universe._get_fname(outdir, extra="mock_events", ext="png")
+            safe_savefig(fig, fname)
         return fig
+
+    def hist_mock_2d_events(self):
+        u: Universe = self.universe
+        mc_bins, z_bins = u.get_mc_and_z_bins()
+        hist2d_mcz = np.histogram2d(
+            self.mcz[:, 1], self.mcz[:, 0], bins=[z_bins, mc_bins]
+        )[0].T
+        hist1d_mc = np.histogram(self.mcz[:, 0], bins=mc_bins)[0]
+        hist1d_z = np.histogram(self.mcz[:, 1], bins=z_bins)[0]
+        hist1d_z = (hist1d_z / np.sum(hist1d_z)) * np.sum(u.redshift_rate)
+        hist1d_mc = (hist1d_mc / np.sum(hist1d_mc)) * np.sum(u.chirp_mass_rate)
+        return hist2d_mcz, hist1d_z, hist1d_mc
+
+    def plot_hist(self, save=True, outdir=".", fname=""):
+        fig = self.universe.plot_detection_rate_matrix(save=False, titles=False)
+        axes = fig.get_axes()
+        ax_2d, ax_top, ax_right = axes[0], axes[1], axes[2]
+        cbar_ax = axes[3]
+        u: Universe = self.universe
+        h_2d, h_x, h_y = self.hist_mock_2d_events()
+
+        cbar = ax_2d.pcolormesh(
+            u.redshifts,
+            u.chirp_masses,
+            h_2d,
+            cmap="viridis",
+            norm="linear",
+        )
+        fig.colorbar(
+            cbar,
+            cax=cbar_ax,
+            orientation="vertical",
+            label="COUNT",
+            aspect=5,
+        )
+        cbar_ax.tick_params(labelsize=8, length=0)
+        cbar_ax.yaxis.set_major_locator(LinearLocator(5))
+        cbar_ax.yaxis.set_ticks_position("left")
+
+        # plot 1d histograms ensuring normalized to "redshift_rate"
+
+        kwgs = dict(color="dodgerblue", alpha=0.8, ls="dashed")
+        ax_top.step(u.redshifts, h_x, **kwgs)
+        ax_right.step(h_y, u.chirp_masses, **kwgs)
+
+        fig.suptitle(f"Hist mock-population ({self.n_events} mock events)")
+        mse = self.mse_2d_grid()
+        axes[1].set_title(f"Grid MSE: {mse:.2e}", fontsize=7)
+        if save or fname:
+            if fname == "":
+                fname = self.universe._get_fname(outdir, extra="mock_hist", ext="png")
+            safe_savefig(fig, fname)
+        return fig
+
+    def mse_2d_grid(self):
+        hist2d, _, _ = self.hist_mock_2d_events()
+        rate2d = self.universe.detection_rate
+
+        hist2d = hist2d.ravel() / np.sum(hist2d.ravel())
+        rate2d = rate2d.ravel() / np.sum(rate2d.ravel())
+
+        # mean squre error
+        mse = np.square(np.subtract(rate2d, hist2d)).mean()
+        return mse
 
     @property
     def param_list(self) -> np.array:
@@ -226,7 +299,12 @@ class Universe:
         return uni
 
     @classmethod
-    def from_hdf5(cls, h5file: Union[h5py.File, str], idx: int):
+    def from_hdf5(
+        cls,
+        h5file: Union[h5py.File, str],
+        idx: int = None,
+        search_param: Dict[str, float] = {},
+    ):
         """Create a Universe object from a hdf5 file (dont run cosmic integrator)"""
         data = {}
         common_keys = [
@@ -243,6 +321,21 @@ class Universe:
 
         for key in common_keys:
             data[key] = h5file.attrs[key]
+
+        if idx is None:
+            params = h5file["parameters"]
+            search_val = [
+                search_param["aSF"],
+                search_param["bSF"],
+                search_param["cSF"],
+                search_param["dSF"],
+                search_param["muz"],
+                search_param["sigma0"],
+            ]
+            # get index of the closest match
+            idx = np.argmin(np.sum((params[:] - search_val) ** 2, axis=1))
+            logger.debug(f"Found closest match at index {idx}")
+
         data["detection_rate"] = h5file["detection_matricies"][idx]
         params = h5file["parameters"][idx]
         data["SF"] = params[:4]
@@ -273,6 +366,7 @@ class Universe:
         self,
         save=True,
         outdir=".",
+        fname="",
         smoothed_2d_data=False,
         titles=True,
         imshow=False,
@@ -306,7 +400,7 @@ class Universe:
                 zz,
                 mcc,
                 rate2d,
-                cmap=plt.cm.hot,
+                cmap=CMAP,
                 norm="linear",
                 # vmin=np.quantile(rate2d, 0.5),
                 # vmax=np.quantile(rate2d, 0.99),
@@ -314,7 +408,7 @@ class Universe:
         else:
             cbar = ax_2d.imshow(
                 rate2d,
-                cmap=plt.cm.hot,
+                cmap=CMAP,
                 norm="linear",
                 vmin=np.quantile(rate2d, 0.5),
                 vmax=np.quantile(rate2d, 0.99),
@@ -381,8 +475,9 @@ class Universe:
         for spine in cbar_ax.spines.values():
             spine.set_edgecolor("white")
 
-        if save:
-            fname = self._get_fname(outdir, extra="det_matrix", ext="png")
+        if save or fname:
+            if fname == "":
+                fname = self._get_fname(outdir, extra="det_matrix", ext="png")
             plt.savefig(fname, bbox_inches="tight", pad_inches=0)
             plt.close(fig)
 
@@ -395,21 +490,31 @@ class Universe:
                 fname += f"_{extra}"
         return os.path.join(outdir, f"{fname}.{ext}")
 
+    def get_mc_and_z_bins(
+        self,
+        num_mc_bins: Optional[int] = 51,
+        num_z_bins: Optional[int] = 101,
+    ):
+        mc, z = self.chirp_masses, self.redshifts
+        mc_bins = np.linspace(MC_RANGE[0], MC_RANGE[1], num_mc_bins)
+        z_bins = np.linspace(Z_RANGE[0], Z_RANGE[1], num_z_bins)
+        return mc_bins, z_bins
+
     def bin_detection_rate(
         self, num_mc_bins: Optional[int] = 51, num_z_bins: Optional[int] = 101, frac=1.0
     ):
 
         binned_data = self.detection_rate.copy()
         mc, z = self.chirp_masses, self.redshifts
+        mc_bins, z_bins = self.get_mc_and_z_bins(num_mc_bins, num_z_bins)
 
-        if num_mc_bins is not None:
-            mc_bins = np.linspace(MC_RANGE[0], MC_RANGE[1], num_mc_bins)
-            binned_data = bin_data2d(binned_data, mc, mc_bins, axis=0)
-            mc = 0.5 * (mc_bins[1:] + mc_bins[:-1])
-        if num_z_bins is not None:
-            z_bins = np.linspace(Z_RANGE[0], Z_RANGE[1], num_z_bins)
-            binned_data = bin_data2d(binned_data, z, z_bins, axis=1)
-            z = 0.5 * (z_bins[1:] + z_bins[:-1])
+        # bin rate data
+        binned_data = bin_data2d(binned_data, mc, mc_bins, axis=0)
+        binned_data = bin_data2d(binned_data, z, z_bins, axis=1)
+
+        # get bin centers
+        mc = 0.5 * (mc_bins[1:] + mc_bins[:-1])
+        z = 0.5 * (z_bins[1:] + z_bins[:-1])
 
         assert (len(mc), len(z)) == binned_data.shape
 
@@ -521,7 +626,9 @@ class Universe:
             df = self.get_detection_rate_dataframe()
             df = df.sort_values("rate", ascending=False)
             if np.sum(df.rate) > 0:
-                n_events = df.sample(weights=df.rate, n=n_obs, random_state=0)
+                n_events = df.sample(
+                    weights=df.rate, n=n_obs, random_state=0, replace=True
+                )
             else:
                 n_events = df.sample(n=n_obs, random_state=0)
             return n_events[["mc", "z"]].values

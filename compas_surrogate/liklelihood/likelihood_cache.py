@@ -141,3 +141,10 @@ class LikelihoodCache(object):
         df = pd.DataFrame(data)
         df["lnl"] = self.lnl
         return df
+
+    def max_lnl_param_dict(self) -> Dict[str, float]:
+        """Get the param corresponding to the maximum likelihood event"""
+        df = pd.DataFrame({**self.param_dict, "lnl": self.lnl})
+        max_lnl_row = df.loc[df["lnl"].idxmax()].to_dict()
+        del max_lnl_row["lnl"]
+        return max_lnl_row
