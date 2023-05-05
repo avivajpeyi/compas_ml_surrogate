@@ -34,6 +34,6 @@ def generate_datasets(in_compas_h5: str, outdir: str, n_copies: int = 10):
     for i in tqdm(range(n_copies), desc="Sampling"):
         out_compas_h5 = fn_fmt.format(i)
         sample_h5(
-            in_compas_h5, out_compas_h5, n=sampled_n, replace=True, seed_group=DCO_KEY
+            in_compas_h5, out_compas_h5, n=sampled_n, replace=False, seed_group=DCO_KEY
         )
         logger.info(f"{out_compas_h5} ({os.stat(out_compas_h5).st_size/1e9:.2f} GB)")
