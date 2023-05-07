@@ -320,7 +320,11 @@ class Universe:
             h5file_opened = True
 
         for key in common_keys:
-            data[key] = h5file.attrs[key]
+            data[key] = h5file.attrs.get(key, None)
+            if data[key] is None:
+                raise logger.warning(
+                    f"Could not find {key} in hdf5 file: {h5file}. Attributes avail: {h5file.attrs.keys()}"
+                )
 
         if idx is None:
             params = h5file["parameters"]
