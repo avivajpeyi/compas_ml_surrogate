@@ -1,5 +1,6 @@
 import glob
 
+import click
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.auto import tqdm
@@ -10,6 +11,17 @@ from compas_surrogate.data_generation.likelihood_cacher import (
 )
 
 
+@click.command()
+@click.option(
+    "--matrix_regrex",
+    type=str,
+    help="Regrex for the matrix files to use",
+)
+@click.option(
+    "--outdir",
+    type=str,
+    help="Output directory",
+)
 def make_lnl_table(
     matrix_regrex,
     outdir,
@@ -68,16 +80,16 @@ def plot_1d_lnl(df, true_val, parm_name):
     plt.show()
 
 
-def main():
-    make_lnl_table(
-        "upsampled_datasets/500grid_mu_sig/*.h5",
-        outdir="upsampled_datasets/500grid_mu_sig/lnl_tables",
-    )
-    make_lnl_table(
-        "downsampled_datasets/500grid_mu_sig/*.h5",
-        outdir="downsampled_datasets/500grid_mu_sig/lnl_tables",
-    )
-
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     make_lnl_table(
+#         "upsampled_datasets/500grid_mu_sig/*.h5",
+#         outdir="upsampled_datasets/500grid_mu_sig/lnl_tables",
+#     )
+#     make_lnl_table(
+#         "downsampled_datasets/500grid_mu_sig/*.h5",
+#         outdir="downsampled_datasets/500grid_mu_sig/lnl_tables",
+#     )
+#
+#
+# if __name__ == "__main__":
+#     main()
