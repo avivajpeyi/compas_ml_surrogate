@@ -63,7 +63,8 @@ def plot_corner(
     if len(samples) != 1:
         fig = corner(samples, **kwgs)
     else:
-        fig = plt.hist(
+        plt.figure(figsize=(3, 3))
+        plt.hist(
             samples[list(samples.keys())[0]],
             weights=prob,
             bins=50,
@@ -74,4 +75,6 @@ def plot_corner(
         plt.xlabel(labels[0])
         if true_params is not None:
             plt.axvline(true_params[0], color="tab:orange", label="True value")
+        plt.tight_layout()
+        fig = plt.gcf()
     return fig
