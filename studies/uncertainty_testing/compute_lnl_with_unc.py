@@ -91,5 +91,5 @@ def plot_1d_lnl(df, true_val, parm_name):
 #     )
 #
 #
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    make_lnl_table()
