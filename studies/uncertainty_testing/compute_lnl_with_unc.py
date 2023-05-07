@@ -13,7 +13,7 @@ from compas_surrogate.data_generation.likelihood_cacher import (
 
 @click.command()
 @click.option(
-    "--matrix_regrex",
+    "--matrix_regex",
     type=str,
     help="Regrex for the matrix files to use",
 )
@@ -23,11 +23,11 @@ from compas_surrogate.data_generation.likelihood_cacher import (
     help="Output directory",
 )
 def make_lnl_table(
-    matrix_regrex,
+    matrix_regex,
     outdir,
 ):
 
-    matix_paths = glob.glob(matrix_regrex)
+    matix_paths = glob.glob(matrix_regex)
     mock_uni = Universe.from_hdf5(matix_paths[0], 2)
     mock_population = mock_uni.sample_possible_event_matrix()
 
