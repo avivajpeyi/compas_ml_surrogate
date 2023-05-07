@@ -323,7 +323,7 @@ class Universe:
             data[key] = h5file.attrs.get(key, None)
             if data[key] is None:
                 raise logger.info(
-                    f"Could not find {key} in hdf5 file: {h5file}. Attributes avail: {h5file.attrs.keys()}"
+                    f"Could not find {key} in hdf5 file. Attributes avail: {h5file.attrs.keys()}"
                 )
 
         if idx is None:
