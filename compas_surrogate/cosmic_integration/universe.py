@@ -322,7 +322,7 @@ class Universe:
         for key in common_keys:
             data[key] = h5file.attrs.get(key, None)
             if data[key] is None:
-                raise logger.info(
+                logger.warning(
                     f"Could not find {key} in hdf5 file. Attributes avail: {h5file.attrs.keys()}"
                 )
 
