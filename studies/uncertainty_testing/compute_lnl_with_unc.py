@@ -28,6 +28,7 @@ def make_lnl_table(
 ):
 
     matix_paths = glob.glob(matrix_regex)
+    print(f"Found {len(matix_paths)} matrices")
     mock_uni = Universe.from_hdf5(matix_paths[0], 2)
     mock_population = mock_uni.sample_possible_event_matrix()
 
