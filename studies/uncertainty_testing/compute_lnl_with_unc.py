@@ -34,6 +34,7 @@ def make_lnl_table(
 
     caches = []
     for i in tqdm(range(len(matix_paths)), desc="Loading caches"):
+        print(f"Loading {matix_paths[i]}")
         caches.append(
             get_training_lnl_cache(
                 outdir=f"{outdir}/lnl_cache_{i}",
