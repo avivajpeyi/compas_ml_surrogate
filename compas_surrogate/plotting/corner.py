@@ -59,5 +59,19 @@ def plot_corner(
         kwgs["weights"] = prob
     if true_params is not None:
         kwgs["truths"] = true_params
-    fig = corner(samples, **kwgs)
+
+    if len(samples) != 1:
+        fig = corner(samples, **kwgs)
+    else:
+        fig = plt.hist(
+            samples[list(samples.keys())[0]],
+            weights=prob,
+            bins=50,
+            histtype="step",
+            color=color,
+            density=True,
+        )
+        plt.xlabel(labels[0])
+        if true_params is not None:
+            plt.axvline(true_params[0], color="tab:orange", label="True value")
     return fig
