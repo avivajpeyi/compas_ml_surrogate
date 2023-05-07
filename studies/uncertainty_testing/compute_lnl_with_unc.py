@@ -29,12 +29,13 @@ def make_lnl_table(
 
     matix_paths = glob.glob(matrix_regex)
     print(f"Found {len(matix_paths)} matrices")
-    mock_uni = Universe.from_hdf5(matix_paths[0], 2)
+    print(f"Loading {matix_paths[1]}")
+    mock_uni = Universe.from_hdf5(matix_paths[1], 2)
     mock_population = mock_uni.sample_possible_event_matrix()
 
     caches = []
     for i in tqdm(range(len(matix_paths)), desc="Loading caches"):
-        print(f"Loading {matix_paths[i]}")
+
         caches.append(
             get_training_lnl_cache(
                 outdir=f"{outdir}/lnl_cache_{i}",
