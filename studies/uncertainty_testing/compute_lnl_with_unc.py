@@ -56,7 +56,7 @@ def make_lnl_table(
     print("Dataframes merged")
     print(df)
     plot_1d_lnl(df, mock_uni.muz, "muz")
-    plot_1d_lnl(df, mock_uni.sigma0, "sigma0")
+    # plot_1d_lnl(df, mock_uni.sigma0, "sigma0")
 
 
 def plot_1d_lnl(df, true_val, parm_name):
@@ -80,7 +80,7 @@ def plot_1d_lnl(df, true_val, parm_name):
     for i in range(num_lnl):
         plt.plot(vals, df[f"lnl_{i}"], label=f"matrix {i}", color="black", alpha=0.1)
     plt.axvline(true_val, label="True muz", color="red")
-    plt.show()
+    plt.savefig(f"{parm_name}_lnl.png")
 
 
 # def main():
