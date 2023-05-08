@@ -60,14 +60,23 @@ def plot_corner(
     if true_params is not None:
         kwgs["truths"] = true_params
 
+    _s = samples[list(samples.keys())[0]]
+
+    if len(_s) > 20000:
+        bins = 50
+    elif len(_s) > 1000:
+        bins = 20
+    else:
+        bins = 10
+
     if len(samples) != 1:
-        fig = corner(samples, **kwgs)
+        fig = corner(samples, **kwgs, bins=bins)
     else:
         plt.figure(figsize=(3, 3))
         plt.hist(
             samples[list(samples.keys())[0]],
             weights=prob,
-            bins=50,
+            bins=bins,
             histtype="step",
             color=color,
             density=True,

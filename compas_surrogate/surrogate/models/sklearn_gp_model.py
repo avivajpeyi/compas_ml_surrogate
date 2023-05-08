@@ -26,7 +26,7 @@ class SklearnGPModel(Model):
             random_state=0,
             copy_X_train=False,
             n_restarts_optimizer=10,
-            # alpha=0,
+            alpha=10,
         )
 
     def train(
@@ -35,6 +35,7 @@ class SklearnGPModel(Model):
         outputs: np.ndarray,
         verbose: Optional[bool] = False,
         savedir: Optional[str] = None,
+        extra_kwgs={},
     ) -> None:
         """Train the model."""
         (
@@ -53,11 +54,13 @@ class SklearnGPModel(Model):
             random_state=0,
             copy_X_train=False,
             n_restarts_optimizer=10,
-            # alpha=0,
+            alpha=10,
         )
         self._model.fit(train_in, train_out)
 
-        return self._post_training((train_in, train_out), (test_in, test_out), savedir)
+        return self._post_training(
+            (train_in, train_out), (test_in, test_out), savedir, extra_kwgs
+        )
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         """Predict the output of the model for the given input."""

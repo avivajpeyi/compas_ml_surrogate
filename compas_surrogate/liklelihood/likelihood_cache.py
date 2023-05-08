@@ -49,6 +49,7 @@ class LikelihoodCache(object):
             return np.array(list(params.values()))
 
     def get_varying_param_keys(self) -> List[str]:
+        """Get the names for the parameters that change"""
         data = self.get_varying_params(ret_dict=True)
         return list(data.keys())
 
@@ -124,7 +125,8 @@ class LikelihoodCache(object):
 
     def sample(self, n_samples: int) -> "LikelihoodCache":
         """Sample from the likelihood distribution"""
-        idx = np.random.choice(len(self.lnl), size=n_samples, p=self.likelihood)
+        p = self.normed_likelihood / np.sum(self.normed_likelihood)
+        idx = np.random.choice(len(self.lnl), size=n_samples, p=p)
         return LikelihoodCache(
             self.lnl[idx], self.params[idx], self.true_params, self.true_lnl
         )

@@ -11,9 +11,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .cosmic_integration.star_formation_paramters import get_star_formation_prior
-from .cosmic_integration.universe import Universe
+from .cosmic_integration.universe import MockPopulation, Universe
+from .data_generation.detection_matrix_generator import (
+    get_universe_closest_to_parameters,
+)
 from .data_generation.likelihood_cacher import LikelihoodCache, get_training_lnl_cache
 from .logger import logger
+from .plotting.image_utils import horizontal_concat
 from .surrogate.models import DeepGPModel, SklearnGPModel
 from .surrogate.surrogate_likelihood import SurrogateLikelihood
 
@@ -35,19 +39,41 @@ def get_ml_surrogate_model(
         model = gp_model.load(model_dir)
     else:
         param_data = training_data_cache.get_varying_params()
+        tru_lnl = training_data_cache.true_lnl
+
+        # ensure that the true lnl is a valid value
+        if not np.isfinite(tru_lnl):
+            raise ValueError("True lnl is not finite! Skipping analysis.")
+
         in_data = param_data.T
         out_data = training_data_cache.lnl.reshape(-1, 1)
         logger.info(
             f"Training model {model_dir}: IN[{in_data.shape}]--> OUT[{out_data.shape}]"
         )
         model = gp_model()
-        metrics = model.train(in_data, out_data, verbose=True, savedir=model_dir)
-        logger.info(f"Surrogate metrics: {metrics}")
-        pred_lnl = model(training_data_cache.true_param_vals)
-        logger.info(
-            f"True LnL: {training_data_cache.true_lnl}, Surrogate LnL: {pred_lnl}"
+        plt_kwgs = dict(
+            labels=training_data_cache.get_varying_param_keys(),
+            truths=training_data_cache.true_param_vals.ravel(),
         )
-        logger.success("Trained and saved Model")
+
+        metrics = model.train(
+            in_data, out_data, verbose=True, savedir=model_dir, extra_kwgs=plt_kwgs
+        )
+        logger.info(f"Surrogate metrics: {metrics}")
+
+        # check if true lnl inside the range of pred_lnl
+        pred_lnl = np.array(model(training_data_cache.true_param_vals)).ravel()
+        check = (pred_lnl[0] <= tru_lnl) & (tru_lnl <= pred_lnl[2])
+        diff = np.max(
+            [np.abs(pred_lnl[1] - pred_lnl[0]), np.abs(pred_lnl[1] - pred_lnl[2])]
+        )
+        pred_str = f"{pred_lnl[1]:.2f} +/- {diff:.2f}"
+        check_str = "✔" * 3 if check else "❌" * 3
+        logger.info(
+            f"{check_str} True LnL: {tru_lnl:.2f}, Surrogate LnL: {pred_str} {check_str}"
+        )
+    logger.success("Trained and saved Model")
+
     return model
 
 
@@ -90,7 +116,7 @@ def run_inference(
     elif sampler == "dynesty":
         smplr_kwargs = dict(
             sampler="dynesty",
-            nlive=250,
+            nlive=1000,
         )
 
     surr_result = bilby.run_sampler(
@@ -102,10 +128,53 @@ def run_inference(
         clean=clean,
         **smplr_kwargs,
     )
-    surr_result.save_to_file(extension="json")
-    fig = surr_result.plot_corner(save=False)
+    surr_fname = f"{outdir}/inference_result.json"
+    surr_result.save_to_file(filename=surr_fname)
+    mock_fname = f"{cache_outdir}/mock_uni.npz"
+    make_inference_plots(mock_fname, surr_fname, det_matrix_h5, data_cache, model)
+    return surr_result
+
+
+def make_inference_plots(mock_npz, inference_json, det_matrix_h5, data_cache, model):
+    """
+    Make a comparison plot of the true  likelihood
+    """
+
+    # load data
+    mock_uni = MockPopulation.from_npz(mock_npz)
+    inference_result = bilby.result.read_in_result(inference_json)
+    outdir = os.path.dirname(inference_json)
+
+    # get the inferred universe -- highest likelihood universe
+    max_lnl_idx = np.argmax(inference_result.posterior.log_likelihood)
+    max_lnl_params = inference_result.posterior.iloc[max_lnl_idx].to_dict()
+    inferred_uni = get_universe_closest_to_parameters(
+        det_matrix_h5, list(max_lnl_params.values())
+    )
+
+    # plot the 'true' universe
+    outdir_mock = os.path.dirname(mock_npz)
+    mock_plt = f"{outdir_mock}/injection.png"
+    if not os.path.exists(mock_plt):
+        mock_uni.plot(fname=mock_plt)
+
+    # plot the 'inferred' universe
+    fig = inferred_uni.plot_detection_rate_matrix(
+        save=False, scatter_events=mock_uni.mcz
+    )
+    fig.suptitle("MaxLnL Inferred Universe")
+    inferred_plt = f"{outdir}/inferred.png"
+    fig.savefig(inferred_plt)
+
+    # plot the sampling result
+    fig = inference_result.plot_corner(save=False, bins=30, priors=True)
     true_lnl = data_cache.true_lnl
     pred_lnl = model.prediction_str(data_cache.true_param_vals)
     fig.suptitle(f"model lnl: {true_lnl:.2f}\n" f"surro lnl: ${pred_lnl}$")
-    fig.savefig(os.path.join(outdir, "corner.png"))
-    return surr_result
+    corner_plt = f"{outdir}/corner.png"
+    fig.savefig(corner_plt)
+
+    # horizontal concatenation
+    horizontal_concat(
+        [mock_plt, inferred_plt, corner_plt], f"{outdir}/sampling_summary.png"
+    )
