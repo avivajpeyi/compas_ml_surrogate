@@ -56,7 +56,8 @@ def make_lnl_table(
     print("Dataframes merged")
     print(df)
     plot_1d_lnl(df, mock_uni.muz, "muz")
-    # plot_1d_lnl(df, mock_uni.sigma0, "sigma0")
+    if "sigma0" in df.columns:
+        plot_1d_lnl(df, mock_uni.sigma0, "sigma0")
 
 
 def plot_1d_lnl(df, true_val, parm_name):
