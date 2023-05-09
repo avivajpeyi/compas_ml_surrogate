@@ -12,6 +12,7 @@ from tqdm.contrib.concurrent import process_map
 from compas_surrogate.cosmic_integration.universe import MockPopulation, Universe
 from compas_surrogate.liklelihood import LikelihoodCache, ln_likelihood
 from compas_surrogate.logger import logger
+from compas_surrogate.plotting.image_utils import horizontal_concat
 from compas_surrogate.utils import get_num_workers
 
 
@@ -94,6 +95,7 @@ def compute_and_cache_lnl(
         true_lnl=true_lnl,
     )
     lnl_cache.save(cache_lnl_file)
+    mock_population.save(f"{os.path.dirname(cache_lnl_file)}/mock_uni.npz")
     logger.success(f"Saved {cache_lnl_file}")
     return lnl_cache
 
@@ -138,7 +140,7 @@ def get_training_lnl_cache(
             assert isinstance(mock_uni, Universe)
 
         mock_population = mock_uni.sample_possible_event_matrix()
-        mock_population.plot(save=True, outdir=outdir)
+        mock_population.plot(save=True, fname=f"{outdir}/injection.png")
         logger.info(
             f"Generating cache {cache_file} using {det_matrix_h5} and universe {universe_id}:{mock_population}"
         )
@@ -148,9 +150,11 @@ def get_training_lnl_cache(
 
     plt_fname = cache_file.replace(".npz", ".png")
     lnl_cache.plot(fname=plt_fname, show_datapoints=True)
+    train_plt_fname = plt_fname.replace(".png", "_training.png")
     if n_samp is not None:
         lnl_cache = lnl_cache.sample(n_samp)
-    lnl_cache.plot(
-        fname=plt_fname.replace(".png", "_training.png"), show_datapoints=True
+    lnl_cache.plot(fname=train_plt_fname, show_datapoints=True)
+    horizontal_concat(
+        [plt_fname, train_plt_fname], f"{outdir}/cache_pts.png", rm_orig=False
     )
     return lnl_cache

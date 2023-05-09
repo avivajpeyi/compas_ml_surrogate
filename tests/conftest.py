@@ -1,3 +1,4 @@
+import glob
 import os
 
 import pytest
@@ -5,7 +6,7 @@ import pytest
 HERE = os.path.dirname(__file__)
 TEST_DIR = os.path.join(HERE, "test_data")
 SMALL_FILE = os.path.join(TEST_DIR, "COMPAS_Output/COMPAS_Output.h5")
-LARGE_FILE = os.path.join(TEST_DIR, "Z_all/COMPAS_Output.h5")
+LARGE_FILE = os.path.join(TEST_DIR, "Z_all/DCO_data.h5")
 
 
 @pytest.fixture

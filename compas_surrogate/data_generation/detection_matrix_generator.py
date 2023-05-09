@@ -4,6 +4,7 @@ import glob
 import os
 
 import h5py
+import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
@@ -86,6 +87,23 @@ def compile_matricies_into_hdf(npz_regex, fname="detection_matricies.h5") -> Non
         f.close()
         filesize_in_gb = os.path.getsize(fname) / 1e9
     logger.success(f"Saved hdf file ({filesize_in_gb} GB)!")
+
+
+def get_universe_closest_to_parameters(detection_matrix_fn, parameters):
+    """
+    Get the universe with the closest parameters to the given parameters
+    :param detection_matrix_fn: path to detection matrix hdf file
+    :param parameters: parameters to match
+    :return: Universe object
+    """
+    with h5py.File(detection_matrix_fn, "r") as f:
+        parameters = f["parameters"][:]
+        f.close()
+
+    # find the index of the universe with the closest parameters
+    idx = np.argmin(np.linalg.norm(parameters - parameters, axis=1))
+    uni = Universe.from_hdf5(detection_matrix_fn, idx=idx)
+    return uni
 
 
 def generate_set_of_matricies(

@@ -6,7 +6,7 @@ from loguru import logger
 logger.remove(0)
 logger.add(
     sys.stderr,
-    format="|<blue>COMPAS-SUR</blue>|{time:DD/MM HH:mm:ss}|{level}| <green>{message}</green> ",
+    format="|<blue>COMPAS-SUR</>|{time:DD/MM HH:mm:ss}|{level}| {message} ",
     colorize=True,
     level="INFO",
 )

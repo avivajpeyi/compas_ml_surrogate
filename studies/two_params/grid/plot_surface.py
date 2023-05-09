@@ -136,28 +136,14 @@ def main_plotter(large_grid, zoom_in_grid, idx):
     max_lnl_param = large_cache.max_lnl_param_dict()
 
     max_lnl_uni = Universe.from_hdf5(large_grid, search_param=max_lnl_param)
-    fig: plt.Figure = max_lnl_uni.plot_detection_rate_matrix(save=False)
-    axes = fig.get_axes()
-    axes[0].scatter(
-        mock_population.mcz[:, 1],
-        mock_population.mcz[:, 0],
-        s=15,
-        c="dodgerblue",
-        marker="*",
-        alpha=0.95,
+    fig: plt.Figure = max_lnl_uni.plot_detection_rate_matrix(
+        save=False, scatter_events=mock_population.mcz
     )
     fig.suptitle("Matrix using Max LnL SF params", fontsize=10)
     fig.savefig(f"{outdir}/max_lnl_uni.png")
 
-    fig = mock_population.universe.plot_detection_rate_matrix(save=False)
-    axes = fig.get_axes()
-    axes[0].scatter(
-        mock_population.mcz[:, 1],
-        mock_population.mcz[:, 0],
-        s=15,
-        c="dodgerblue",
-        marker="*",
-        alpha=0.95,
+    fig = mock_population.universe.plot_detection_rate_matrix(
+        save=False, scatter_events=mock_population.mcz
     )
     fig.suptitle("Matrix using Injected SF params", fontsize=10)
     fig.savefig(f"{outdir}/true_lnl_uni.png")

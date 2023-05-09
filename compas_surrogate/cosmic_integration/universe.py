@@ -131,6 +131,24 @@ class MockPopulation:
     def __repr__(self):
         return f"MockPopulation({self.universe})"
 
+    def __dict__(self):
+        return {
+            "rate2d": self.rate2d,
+            "mcz": self.mcz,
+            **self.universe.__dict__(),
+        }
+
+    def save(self, fname):
+        data = {k: np.asarray(v) for k, v in self.__dict__().items()}
+        np.savez(fname, **data)
+        return fname
+
+    @classmethod
+    def from_npz(cls, fname):
+        data = np.load(fname)
+        uni = Universe.from_dict(data)
+        return cls(universe=uni, mcz=data["mcz"], rate2d=data["rate2d"])
+
 
 class Universe:
     def __init__(
@@ -174,7 +192,13 @@ class Universe:
         sigma0=DEFAULT["sigma0"],
         outdir=".",
     ):
-        """Create a Universe object from a COMPAS h5 file (run cosmic integrator)"""
+        """Create a Universe object from a COMPAS h5 file (run cosmic integrator)
+
+        Requires the COMPAS h5 file to have the following datasets:
+            BSE_Common_Envelopes
+            BSE_Double_Compact_Objects
+            BSE_System_Parameters
+        """
         if SF is None:
             SF = [
                 DEFAULT["aSF"],
@@ -236,6 +260,7 @@ class Universe:
                 snr_step=0.1,
             )
             runtime = time.time() - start_time
+        logger.debug(f"Cosmic integrator logs:\n{trap.getvalue()}")
 
         sorted_idx = np.argsort(COMPAS.mChirp)
         chirp_masses = COMPAS.mChirp[sorted_idx]
@@ -273,10 +298,11 @@ class Universe:
     def from_npz(cls, fname):
         """Create a Universe object from a npz file (dont run cosmic integrator)"""
         data = dict(np.load(fname))
-        for key in data:
-            if data[key].dtype == "<U48":
-                data[key] = data[key].item()
-        valid_keys = [
+        return cls.from_dict(data)
+
+    @staticmethod
+    def _valid_keys():
+        return [
             "compas_h5_path",
             "n_systems",
             "detection_rate",
@@ -286,7 +312,13 @@ class Universe:
             "muz",
             "sigma0",
         ]
-        data = {k: data.get(k, None) for k in valid_keys}
+
+    @classmethod
+    def from_dict(cls, data: Dict):
+        for key in data:
+            if data[key].dtype == "<U48":
+                data[key] = data[key].item()
+        data = {k: data.get(k, None) for k in cls._valid_keys()}
         uni = cls(**data)
         logger.debug(f"Loaded cached uni with: {uni.param_str}")
         return uni
@@ -313,7 +345,11 @@ class Universe:
             h5file_opened = True
 
         for key in common_keys:
-            data[key] = h5file.attrs[key]
+            data[key] = h5file.attrs.get(key, None)
+            if data[key] is None:
+                logger.warning(
+                    f"Could not find {key} in hdf5 file. Attributes avail: {h5file.attrs.keys()}"
+                )
 
         if idx is None:
             params = h5file["parameters"]
@@ -357,13 +393,36 @@ class Universe:
 
     def plot_detection_rate_matrix(
         self,
-        save=True,
-        outdir=".",
-        fname="",
-        smoothed_2d_data=False,
-        titles=True,
-        imshow=False,
+        save: bool = True,
+        outdir: str = ".",
+        fname: str = "",
+        smoothed_2d_data: bool = False,
+        titles: bool = True,
+        imshow: bool = False,
+        scatter_events: Union[bool, np.ndarray] = None,
     ):
+        """Plot the detection rate matrix as a 2D heatmap
+
+        Parameters
+        ----------
+        save : bool, optional
+            Save the figure, by default True
+        outdir : str, optional
+            Output directory, by default "."
+        fname : str, optional
+            Output filename, by default "uni_{self.param_str}.png"
+        smoothed_2d_data : bool, optional
+            Plot the smoothed 2D data, by default False
+        titles : bool, optional
+            Show the titles, by default True
+        imshow : bool, optional
+            Use imshow instead of pcolormesh, by default False
+        scatter_events : array, optional
+            Plot the events on top of the detection rate matrix, by default None
+            The array should be a 2d array (n_events, 2) where the first column
+            is the chirp mass and the second is the redshift
+
+        """
         os.makedirs(outdir, exist_ok=True)
         title_txt = f"Detection Rate Matrix ({self.n_systems} systems)\n"
         if self.binned:
@@ -441,6 +500,16 @@ class Universe:
         )
         ax_right.axis("off")
         ax_top.axis("off")
+
+        if scatter_events is not None:
+            ax_2d.scatter(
+                scatter_events[:, 1],
+                scatter_events[:, 0],
+                s=15,
+                c="dodgerblue",
+                marker="*",
+                alpha=0.95,
+            )
 
         ax_right.set_ylim(*MC_RANGE)
         ax_2d.set_ylim(*MC_RANGE)
