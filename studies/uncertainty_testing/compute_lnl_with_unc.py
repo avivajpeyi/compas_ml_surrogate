@@ -84,7 +84,9 @@ def plot_1d_lnl(df, true_vals, parm_name):
     num_lnl = len([col for col in df.columns if col.startswith("lnl")])
     # plt.errorbar(vals, lnl_mean, lnl_std, label="LNL mean", color="black", alpha=0.5)
     for i in range(num_lnl):
-        plt.scatter(vals, df[f"lnl_{i}"], label=f"matrix {i}", color=f"C{i}", alpha=0.1)
+        plt.scatter(
+            df[parm_name], df[f"lnl_{i}"], label=f"matrix {i}", color=f"C{i}", alpha=0.1
+        )
     plt.axvline(true_vals[parm_name], label="True muz", color="red")
     plt.xlabel(parm_name)
     plt.ylabel("lnl")
