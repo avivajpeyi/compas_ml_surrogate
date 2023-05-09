@@ -56,7 +56,10 @@ def make_lnl_table(
     print("Dataframes merged")
     print(df)
     true_vals = dict(
-        muz=mock_uni.muz, sigma0=mock_uni.sigma0, aSF=mock_uni.aSF, dSF=mock_uni.dSF
+        muz=mock_population.muz,
+        sigma0=mock_population.sigma0,
+        aSF=mock_population.aSF,
+        dSF=mock_population.dSF,
     )
     plot_1d_lnl(df, true_vals, "muz")
     if "sigma0" in df.columns:
