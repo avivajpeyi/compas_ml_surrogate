@@ -67,13 +67,11 @@ def make_lnl_table(
 
 
 def plot_1d_lnl(df, true_vals, parm_name):
-    # sort by muz
-    df = df.sort_values(by=parm_name)
-
     # filter data to only include the true value of other parameters
     for parm, val in true_vals.items():
         if parm != parm_name and parm in df.columns:
             df = df[df[parm] == val]
+    df = df.sort_values(by=parm_name)
 
     # mean of lnl columns
     lnl_mean = df[[col for col in df.columns if col.startswith("lnl")]].mean(axis=1)
@@ -87,7 +85,7 @@ def plot_1d_lnl(df, true_vals, parm_name):
     vals = df.index.values
     # plt.errorbar(vals, lnl_mean, lnl_std, label="LNL mean", color="black", alpha=0.5)
     for i in range(num_lnl):
-        plt.plot(vals, df[f"lnl_{i}"], label=f"matrix {i}", color=f"C{i}", alpha=0.1)
+        plt.scatter(vals, df[f"lnl_{i}"], label=f"matrix {i}", color=f"C{i}", alpha=0.1)
     plt.axvline(true_vals[parm_name], label="True muz", color="red")
     plt.xlabel(parm_name)
     plt.ylabel("lnl")
