@@ -13,6 +13,7 @@ from compas_surrogate.logger import logger
 from compas_surrogate.plotting.corner import plot_corner
 from compas_surrogate.plotting.image_utils import horizontal_concat
 
+from ...utils import fmt_val_upper_lower
 from .utils import plot_model_corner
 
 MODEL_COL = "tab:green"
@@ -42,11 +43,11 @@ class Model(ABC):
 
     @abstractmethod
     def train(
-        self,
-        inputs: np.ndarray,
-        outputs: np.ndarray,
-        verbose: Optional[bool] = False,
-        savedir: Optional[str] = None,
+            self,
+            inputs: np.ndarray,
+            outputs: np.ndarray,
+            verbose: Optional[bool] = False,
+            savedir: Optional[str] = None,
     ) -> Dict[str, "Metrics"]:
         """Train the model.
 
@@ -81,7 +82,7 @@ class Model(ABC):
         q0, q1 = np.abs(np.round(lower - mean, 2)), np.abs(np.round(mean - upper, 2))
         t, b = np.maximum(q0, q1), np.minimum(q0, q1)
         m = np.round(mean, 2)
-        strs = [f"{m}^{{+{t}}}_{{-{b}}}" for m, t, b in zip(m, t, b)]
+        strs = [fmt_val_upper_lower(m, t, b) for m, t, b in zip(m, t, b)]
         if len(strs) == 1:
             return strs[0]
         else:

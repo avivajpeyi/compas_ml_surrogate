@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from sklearn.model_selection import ShuffleSplit, learning_curve
 
-from ...inference_runner import get_training_lnl_cache
+from ...data_generation.likelihood_cacher import get_training_lnl_cache
 from ...plotting.corner import KWGS
 
 

@@ -2,6 +2,7 @@ import datetime
 import random
 
 from compas_surrogate.pp_test import PPresults, PPrunner
+from compas_surrogate.utils import now
 
 H5 = "det_matrix.h5"
 random.seed(1)
@@ -19,9 +20,6 @@ def run_analyses_and_make_pp_plot(outdir, h5, n_training, n_injections):
     pp_results = PPresults.from_results(f"{outdir}/out*/*.json")
     pp_results.plot(f"{outdir}/pp_plot.png")
 
-
-def now():
-    return datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
 
 if __name__ == "__main__":

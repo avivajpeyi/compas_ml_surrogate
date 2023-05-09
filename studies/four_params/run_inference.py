@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 
 from compas_surrogate.inference_runner import run_inference
+from compas_surrogate.utils import now
 
 OUTDIR = "out_surr"
 H5 = "det_matrix.h5"

@@ -3,6 +3,7 @@ from multiprocessing import cpu_count
 import numpy as np
 import requests
 from tqdm.auto import tqdm
+import datetime
 
 
 def download_file(url: str, filename: str) -> str:
@@ -45,3 +46,11 @@ def exp_norm_scale_log_data(x):
     x = x / np.sum(x)
     x = (x - np.min(x)) / (np.max(x) - np.min(x))
     return x
+
+
+def fmt_val_upper_lower(val: float, up: float, low: float) -> str:
+    return f"{val}^{{+{up}}}_{{-{low}}}"
+
+
+def now():
+    return datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

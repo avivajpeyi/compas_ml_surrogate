@@ -32,6 +32,7 @@ INSTALL_REQUIRES = [
     "george",
     "scikit-learn",
     "arviz",
+    "fpdf"
 ]
 EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [

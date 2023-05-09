@@ -155,6 +155,6 @@ def get_training_lnl_cache(
         lnl_cache = lnl_cache.sample(n_samp)
     lnl_cache.plot(fname=train_plt_fname, show_datapoints=True)
     horizontal_concat(
-        [plt_fname, train_plt_fname], f"{outdir}/cache_pts.png", rm_orig=True
+        [plt_fname, train_plt_fname], f"{outdir}/cache_pts.png", rm_orig=False
     )
     return lnl_cache

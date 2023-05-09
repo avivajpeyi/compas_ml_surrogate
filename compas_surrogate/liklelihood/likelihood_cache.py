@@ -7,16 +7,18 @@ from compas_surrogate.logger import logger
 from compas_surrogate.plotting import safe_savefig
 from compas_surrogate.plotting.corner import plot_corner
 
+from collections import namedtuple
+
 
 class LikelihoodCache(object):
     """Stores the likelihood values for a list of parameters (Optionally stores true model parameters)"""
 
     def __init__(
-        self,
-        lnl: np.ndarray,
-        params: np.ndarray,
-        true_params: Optional[np.array] = None,
-        true_lnl: Optional[float] = None,
+            self,
+            lnl: np.ndarray,
+            params: np.ndarray,
+            true_params: Optional[np.array] = None,
+            true_lnl: Optional[float] = None,
     ):
         self.lnl = lnl
         self.params = params
@@ -80,6 +82,13 @@ class LikelihoodCache(object):
         if self.true_params is None:
             return {}
         return dict(zip(param_names, self.true_params))
+    def get_true_param_lnl(self) -> float:
+        """Get the likelihood of the true parameters"""
+        if self.true_lnl is None:
+            # get lnl value closest to true params
+            idx = np.argmin(np.sum(np.abs(self.params - self.true_params), axis=1))
+            self.true_lnl = self.lnl[idx]
+        return self.true_lnl
 
     @property
     def normed_likelihood(self):
@@ -149,3 +158,14 @@ class LikelihoodCache(object):
         max_lnl_row = df.loc[df["lnl"].idxmax()].to_dict()
         del max_lnl_row["lnl"]
         return max_lnl_row
+
+    def get_sample_histograms(self, bins=None) -> Dict[str, namedtuple("Hist", ["hist", "bin_edges"])]:
+        df = self.dataframe
+        Hist = namedtuple("Hist", ["hist", "bin_edges"])
+        hists = {}
+        if bins is None:
+            bins = {k: int(np.sqrt(len(df))) for k in self.get_varying_param_keys()}
+        for k in self.get_varying_param_keys():
+            hist, bin_edges = np.histogram(df[k], bins=bins[k], density=True)
+            hists[k] = Hist(hist, bin_edges)
+        return hists
