@@ -12,4 +12,4 @@ module unload zlib
 module load pandas/1.2.2-python-3.8.5
 source /fred/oz980/avajpeyi/envs/compas_venv/bin/activate
 
-python make_det_matricies.py --compas_file_regex "sampled_datasets/*.h5" --outdir sampled_datasets/muz_sigms_matricies -n 1500
+python make_det_matricies.py --compas_file_regex "sampled_datasets/*.h5" --outdir sampled_datasets/muz_sigam_narrow_matricies -n 1500

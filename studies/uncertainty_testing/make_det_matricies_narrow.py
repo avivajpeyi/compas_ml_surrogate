@@ -41,7 +41,8 @@ def make_matricies_for_different_results(compas_file_regex, outdir, n=10):
                 save_images=False,
                 outdir=os.path.join(outdir, f"out_{label}"),
                 parameters=["muz", "sigma0"],
-                save_h5_fname=f"matricies_{label}.h5",
+                save_h5_fname=f"narrow_matricies_{label}.h5",
+                custom_ranges={"muz": (-0.48, -0.45), "sigma0": (0.17, 0.24)},
                 grid_parameterspace=True,
             )
 
