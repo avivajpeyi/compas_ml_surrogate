@@ -72,7 +72,7 @@ def plot_1d_lnl(df, true_vals, parm_name):
 
     # filter data to only include the true value of other parameters
     for parm, val in true_vals.items():
-        if parm != parm_name:
+        if parm != parm_name and parm in df.columns:
             df = df[df[parm] == val]
 
     # mean of lnl columns
