@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=large_grid
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=4
-#SBATCH --time=10:00:00
+#SBATCH --ntasks-per-node=8
+#SBATCH --time=8:00:00
 #SBATCH --output=large_grid.log
-#SBATCH --mem-per-cpu=2G
+#SBATCH --mem=22G
 
 module load git/2.18.0 git-lfs/2.4.0 gcc/9.2.0 openmpi/4.0.2 numpy/1.19.2-python-3.8.5 mpi4py/3.0.3-python-3.8.5
 module unload zlib
