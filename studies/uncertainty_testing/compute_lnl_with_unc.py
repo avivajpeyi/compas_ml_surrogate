@@ -55,17 +55,22 @@ def make_lnl_table(
         df = df.merge(curr_df, on=merge_on)
     print("Dataframes merged")
     print(df)
-    plot_1d_lnl(df, mock_uni.muz, "muz")
+    true_vals = dict(
+        muz=mock_uni.muz, sigma0=mock_uni.sigma0, aSF=mock_uni.aSF, dSF=mock_uni.dSF
+    )
+    plot_1d_lnl(df, true_vals, "muz")
     if "sigma0" in df.columns:
-        plot_1d_lnl(df, mock_uni.sigma0, "sigma0")
+        plot_1d_lnl(df, true_vals, "sigma0")
 
 
-def plot_1d_lnl(df, true_val, parm_name):
+def plot_1d_lnl(df, true_vals, parm_name):
     # sort by muz
     df = df.sort_values(by=parm_name)
 
-    # group data by param_name
-    df = df.groupby(parm_name).mean()
+    # filter data to only include the true value of other parameters
+    for parm, val in true_vals.items():
+        if parm != parm_name:
+            df = df[df[parm] == val]
 
     # mean of lnl columns
     lnl_mean = df[[col for col in df.columns if col.startswith("lnl")]].mean(axis=1)
@@ -80,7 +85,10 @@ def plot_1d_lnl(df, true_val, parm_name):
     # plt.errorbar(vals, lnl_mean, lnl_std, label="LNL mean", color="black", alpha=0.5)
     for i in range(num_lnl):
         plt.plot(vals, df[f"lnl_{i}"], label=f"matrix {i}", color=f"C{i}", alpha=0.1)
-    plt.axvline(true_val, label="True muz", color="red")
+    plt.axvline(true_vals[parm_name], label="True muz", color="red")
+    plt.xlabel(parm_name)
+    plt.ylabel("lnl")
+    plt.legend(fontsize=8)
     plt.savefig(f"{parm_name}_lnl.png")
 
 
