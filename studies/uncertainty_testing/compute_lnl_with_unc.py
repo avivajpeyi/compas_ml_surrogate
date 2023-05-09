@@ -78,19 +78,34 @@ def plot_1d_lnl(df, true_vals, parm_name):
     lnl_std = df[[col for col in df.columns if col.startswith("lnl")]].std(axis=1)
 
     plt.close("all")
-    plt.figure()
+
+    # plot it
+    fig, (ax0, ax1) = plt.subplots(
+        2,
+        1,
+        gridspec_kw={"height_ratios": [3, 1], "wspace": 0, "hspace": 0},
+        sharex=True,
+    )
+
+    # make fig sub axes small
 
     # num of lnl_i columns
     num_lnl = len([col for col in df.columns if col.startswith("lnl")])
-    # plt.errorbar(vals, lnl_mean, lnl_std, label="LNL mean", color="black", alpha=0.5)
     for i in range(num_lnl):
-        plt.scatter(
+        ax0.scatter(
             df[parm_name], df[f"lnl_{i}"], label=f"matrix {i}", color=f"C{i}", alpha=0.1
         )
-    plt.axvline(true_vals[parm_name], label="True muz", color="red")
-    plt.xlabel(parm_name)
-    plt.ylabel("lnl")
-    plt.legend(fontsize=8)
+        ax0.plot(
+            df[parm_name], df[f"lnl_{i}"], label=f"matrix {i}", color=f"C{i}", alpha=0.1
+        )
+    # plot relative error in lnl
+    ax1.error(df[parm_name], 0, lnl_std / lnl_mean, color="black", alpha=0.1)
+    ax0.axvline(true_vals[parm_name], label="True muz", color="red")
+    ax1.axvline(true_vals[parm_name], label="True muz", color="red")
+    ax1.xlabel(parm_name)
+    ax0.ylabel("lnl")
+    ax0.legend(fontsize=8)
+    fig.tight_layout()
     plt.savefig(f"{parm_name}_lnl.png")
 
 
