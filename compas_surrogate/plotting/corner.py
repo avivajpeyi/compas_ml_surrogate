@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 from corner import corner
 
@@ -32,12 +33,12 @@ def _clean_samples(samples: Dict[str, List[float]]) -> Dict[str, List[float]]:
 
 
 def plot_corner(
-    samples: Dict[str, List[float]],
-    prob: Optional[Union[List[float], np.ndarray]] = None,
-    true_params: Optional[List[float]] = None,
-    labels=None,
-    show_datapoints=False,
-    color="tab:blue",
+        samples: Dict[str, List[float]],
+        prob: Optional[Union[List[float], np.ndarray]] = None,
+        true_params: Optional[List[float]] = None,
+        labels=None,
+        show_datapoints=False,
+        color="tab:blue",
 ) -> plt.Figure:
     """Plot corner plot weighted by the probability of the samples."""
     kwgs = KWGS.copy()
@@ -60,14 +61,18 @@ def plot_corner(
     if true_params is not None:
         kwgs["truths"] = true_params
 
+    _s = samples[list(samples.keys())[0]]
+
+    bins = int(np.sqrt(len(_s)))
+
     if len(samples) != 1:
-        fig = corner(samples, **kwgs)
+        fig = corner(samples, **kwgs, bins=bins)
     else:
         plt.figure(figsize=(3, 3))
         plt.hist(
             samples[list(samples.keys())[0]],
             weights=prob,
-            bins=50,
+            bins=bins,
             histtype="step",
             color=color,
             density=True,
@@ -77,4 +82,13 @@ def plot_corner(
             plt.axvline(true_params[0], color="tab:orange", label="True value")
         plt.tight_layout()
         fig = plt.gcf()
+    return fig
+
+
+def add_legend_to_corner(fig, labels, colors, fs=16):
+    """Add legend to corner plot"""
+    legend_elements = [
+        Line2D([0], [0], color=c, lw=4, label=l) for c, l in zip(colors, labels)]
+    fig.legend(handles=legend_elements, loc="upper right", bbox_to_anchor=(0.95, 0.95), bbox_transform=fig.transFigure,
+               frameon=False, fontsize=fs)
     return fig

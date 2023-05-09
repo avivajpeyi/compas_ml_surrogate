@@ -9,7 +9,7 @@ from time import time
 import h5py
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from compas_surrogate.inference_runner import run_inference
 
@@ -18,7 +18,7 @@ from ..logger import logger
 for l in logging.Logger.manager.loggerDict.keys():
     logging.getLogger(l).setLevel(logging.FATAL)
 
-# disable tqdm
+# disable tqdm (for multiprocessing)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 OUTDIR = "out_pp"
@@ -36,6 +36,18 @@ class PPrunner:
         n_training: int = 500,
         n_injections: int = 100,
     ):
+        """
+        Parameters
+        ----------
+        outdir : str
+            The output directory for the results
+        det_matricies_fname : str
+            The name of the det matrices h5 file
+        n_training : int
+            The number of training samples to use
+        n_injections : int
+            The number of injections to use
+        """
         self.outdir = outdir
         os.makedirs(outdir, exist_ok=True)
         self.det_matricies_fname = det_matricies_fname
@@ -71,6 +83,7 @@ class PPrunner:
             )
         )
         df.to_csv(self.inj_file, index=False)
+        logger.info(f"Generated injection file: {self.inj_file}")
 
     def update_inj_status(self, i, runtime: float):
         df = self.get_injections()
@@ -95,7 +108,15 @@ class PPrunner:
         """Run inference for all injections"""
         df = self.get_injections()
         logger.info(f"Running inference for {len(df)} injections")
-        for idx in tqdm(range(len(df))):
+
+        t0 = time()
+        for idx in range(len(df)):
+            percent_complete = int(idx / len(df) * 100)
+            t1 = time()
+            if t1 - t0 > 60 * 5:  # print progress every 5 minutes
+                logger.info(f"Progress: {percent_complete}%")
+                t0 = t1
+
             i = df.iloc[idx]["universe_id"]
             analysis_complete = df.iloc[idx]["analysis_complete"]
             if analysis_complete:

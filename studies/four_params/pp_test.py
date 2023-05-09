@@ -2,25 +2,31 @@ import datetime
 import random
 
 from compas_surrogate.pp_test import PPresults, PPrunner
+from compas_surrogate.utils import now
 
-# get datetime stamp short version
-now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-
-OUTDIR = f"out_pp_{now}"
 H5 = "det_matrix.h5"
-INJ_FILE = f"{OUTDIR}/injection_ids.csv"
-N_TRAINING = 5000
-N_INJ = 500
 random.seed(1)
 
 
-def main():
-    runner = PPrunner(OUTDIR, H5, n_training=N_TRAINING, n_injections=N_INJ)
-    runner.generate_injection_file(n=N_INJ)
+def run_analyses_and_make_pp_plot(outdir, h5, n_training, n_injections):
+    runner = PPrunner(
+        outdir=outdir,
+        det_matricies_fname=h5,
+        n_training=n_training,
+        n_injections=n_injections,
+    )
+    runner.generate_injection_file(n=n_injections)
     runner.run()
-    pp_results = PPresults.from_results(f"{OUTDIR}/out*/*.json")
-    pp_results.plot()
+    pp_results = PPresults.from_results(f"{outdir}/out*/*.json")
+    pp_results.plot(f"{outdir}/pp_plot.png")
+
 
 
 if __name__ == "__main__":
-    main()
+    for n_train in [500, 1000, 2000, 2500, 3000]:
+        run_analyses_and_make_pp_plot(
+            outdir=f"out_pp_ntrain_{n_train}_{now()}",
+            h5=H5,
+            n_training=n_train,
+            n_injections=500,
+        )

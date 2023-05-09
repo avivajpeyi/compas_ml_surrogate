@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from sklearn.model_selection import ShuffleSplit, learning_curve
 
-from ...inference_runner import get_training_lnl_cache
+from ...data_generation.likelihood_cacher import get_training_lnl_cache
 from ...plotting.corner import KWGS
 
 
@@ -64,9 +64,23 @@ def plot_model_corner(
     test_color = kwgs.get("test_col", "tab:orange")
     model_color = kwgs.get("model_col", "tab:green")
 
+    corner_kwgs = dict(
+        labels=kwgs.get("labels", None),
+        truths=kwgs.get("truths", None),
+    )
     # plot of training and datapoints (no contours)
-    fig = corner(training_data[0], **_get_points_kwgs(train_color))
-    fig = corner(testing_data[0], **_get_points_kwgs(test_color, 0.85), fig=fig)
+    fig = corner(training_data[0], **_get_points_kwgs(train_color), **corner_kwgs)
+    fig = corner(
+        testing_data[0], **_get_points_kwgs(test_color, 0.85), fig=fig, **corner_kwgs
+    )
+
+    _s = training_data[0][:, 0]
+    if len(_s) > 20000:
+        bins = 50
+    elif len(_s) > 1000:
+        bins = 20
+    else:
+        bins = 10
 
     # plot of the training and model contours
     fig = corner(
@@ -74,6 +88,7 @@ def plot_model_corner(
         weights=norm_lnl(training_data[1]),
         fig=fig,
         **_get_contour_kwgs(train_color),
+        bins=bins,
     )
     # plot of the predicted contoursndarray
     fig = corner(
@@ -81,13 +96,14 @@ def plot_model_corner(
         weights=norm_lnl(predictions),
         fig=fig,
         **_get_contour_kwgs(model_color, ls="dashed", lw=1, alpha=1),
+        bins=bins,
     )
 
     # add legend to figure to right using the following colors
     labels = [
         f"Train ({len(training_data[0])})",
         f"Test ({len(testing_data[0])})",
-        "Model",
+        "Surrogate",
     ]
     colors = [train_color, test_color, model_color]
     legend_elements = [
