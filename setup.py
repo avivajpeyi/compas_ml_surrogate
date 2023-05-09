@@ -21,20 +21,19 @@ INSTALL_REQUIRES = [
     "astropy",
     "matplotlib",
     "h5py",
-    # "sbi",
-    # "tensorflow>=2.0.0",
-    # "xarray",
     "plotly",
     "loguru",
     "tqdm",
     "requests",
-    "gpflow",
     "george",
     "scikit-learn",
     "arviz",
     "fpdf"
 ]
-EXTRA_REQUIRE = {"test": ["pytest>=3.6"]}
+EXTRA_REQUIRE = {
+    'gpflow': ['gpflow'],
+    'test': ["pytest>=3.6"],
+}
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [
     "pre-commit",
     "flake8",
