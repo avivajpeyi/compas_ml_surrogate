@@ -99,7 +99,12 @@ def plot_1d_lnl(df, true_vals, parm_name):
             df[parm_name], df[f"lnl_{i}"], label=f"matrix {i}", color=f"C{i}", alpha=0.1
         )
     # plot relative error in lnl
-    ax1.error(df[parm_name], 0, lnl_std / lnl_mean, color="black", alpha=0.1)
+    ax1.errorbar(
+        df[parm_name],
+        (lnl_mean - lnl_mean.min()) / lnl_mean.min(),
+        yerr=lnl_std / lnl_mean.min(),
+        fmt=".",
+    )
     ax0.axvline(true_vals[parm_name], label="True muz", color="red")
     ax1.axvline(true_vals[parm_name], label="True muz", color="red")
     ax1.xlabel(parm_name)
