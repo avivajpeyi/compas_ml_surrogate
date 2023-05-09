@@ -132,6 +132,10 @@ def generate_set_of_matricies(
     if outdir != ".":
         os.makedirs(outdir, exist_ok=True)
 
+    if os.path.isfile(save_h5_fname):
+        logger.info(f"HDF file {save_h5_fname} already exists, skipping matrix generation")
+        return
+
     sf_sample_fname = os.path.join(outdir, "sf_samples.csv")
     if os.path.isfile(sf_sample_fname):
         sf_samples = pd.read_csv(sf_sample_fname)

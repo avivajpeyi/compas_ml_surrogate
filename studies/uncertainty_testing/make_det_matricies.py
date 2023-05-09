@@ -35,15 +35,19 @@ def make_matricies_for_different_results(compas_file_regex, outdir, n=10):
             logger.info(f"Generating matrix for {f}")
             label = os.path.basename(f).split(".h5")[0].split("_")[-1]
 
-            generate_set_of_matricies(
-                compas_h5_path=f,
-                n=n,
-                save_images=False,
-                outdir=os.path.join(outdir, f"out_{label}"),
-                parameters=["muz", "sigma0"],
-                save_h5_fname=f"matricies_{label}.h5",
-                grid_parameterspace=True,
-            )
+            try:
+                generate_set_of_matricies(
+                    compas_h5_path=f,
+                    n=n,
+                    save_images=False,
+                    outdir=os.path.join(outdir, f"out_{label}"),
+                    parameters=["muz", "sigma0"],
+                    save_h5_fname=f"matricies_{label}.h5",
+                    grid_parameterspace=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to generate matrix for {f}")
+                logger.error(e)
 
 
 if __name__ == "__main__":
