@@ -1,9 +1,9 @@
 from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 import numpy as np
 from corner import corner
+from matplotlib.lines import Line2D
 
 KWGS = dict(
     smooth=0.9,
@@ -33,12 +33,12 @@ def _clean_samples(samples: Dict[str, List[float]]) -> Dict[str, List[float]]:
 
 
 def plot_corner(
-        samples: Dict[str, List[float]],
-        prob: Optional[Union[List[float], np.ndarray]] = None,
-        true_params: Optional[List[float]] = None,
-        labels=None,
-        show_datapoints=False,
-        color="tab:blue",
+    samples: Dict[str, List[float]],
+    prob: Optional[Union[List[float], np.ndarray]] = None,
+    true_params: Optional[List[float]] = None,
+    labels=None,
+    show_datapoints=False,
+    color="tab:blue",
 ) -> plt.Figure:
     """Plot corner plot weighted by the probability of the samples."""
     kwgs = KWGS.copy()
@@ -61,16 +61,19 @@ def plot_corner(
     if true_params is not None:
         kwgs["truths"] = true_params
 
-    _s = samples[list(samples.keys())[0]]
+    s_labels = list(samples.keys())
+    _s = samples[s_labels[0]]
 
     bins = int(np.sqrt(len(_s)))
 
+    s_array = np.array([samples[k] for k in s_labels]).T
+
     if len(samples) != 1:
-        fig = corner(samples, **kwgs, bins=bins)
+        fig = corner(s_array, **kwgs, bins=bins, labels=labels)
     else:
         plt.figure(figsize=(3, 3))
         plt.hist(
-            samples[list(samples.keys())[0]],
+            s_array.ravel(),
             weights=prob,
             bins=bins,
             histtype="step",
@@ -88,7 +91,14 @@ def plot_corner(
 def add_legend_to_corner(fig, labels, colors, fs=16):
     """Add legend to corner plot"""
     legend_elements = [
-        Line2D([0], [0], color=c, lw=4, label=l) for c, l in zip(colors, labels)]
-    fig.legend(handles=legend_elements, loc="upper right", bbox_to_anchor=(0.95, 0.95), bbox_transform=fig.transFigure,
-               frameon=False, fontsize=fs)
+        Line2D([0], [0], color=c, lw=4, label=l) for c, l in zip(colors, labels)
+    ]
+    fig.legend(
+        handles=legend_elements,
+        loc="upper right",
+        bbox_to_anchor=(0.95, 0.95),
+        bbox_transform=fig.transFigure,
+        frameon=False,
+        fontsize=fs,
+    )
     return fig

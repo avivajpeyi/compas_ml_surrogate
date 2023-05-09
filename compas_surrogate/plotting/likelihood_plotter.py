@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from .corner import plot_corner
-
 
 def plot_1d_lnl(
     params: List[float],
