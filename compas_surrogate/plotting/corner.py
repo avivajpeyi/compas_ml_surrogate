@@ -53,23 +53,22 @@ def plot_corner(
         )
     kwgs["color"] = color
 
+    s_labels = list(samples.keys())
     if labels is None:
-        labels = list(samples.keys())
+        labels = s_labels
     kwgs["labels"] = labels
     if prob is not None:
         kwgs["weights"] = prob
     if true_params is not None:
         kwgs["truths"] = true_params
 
-    s_labels = list(samples.keys())
     _s = samples[s_labels[0]]
-
     bins = int(np.sqrt(len(_s)))
 
     s_array = np.array([samples[k] for k in s_labels]).T
 
     if len(samples) != 1:
-        fig = corner(s_array, **kwgs, bins=bins, labels=labels)
+        fig = corner(s_array, **kwgs, bins=bins)
     else:
         plt.figure(figsize=(3, 3))
         plt.hist(
