@@ -102,13 +102,14 @@ def plot_1d_lnl(df, true_vals, parm_name):
 
     ax1.errorbar(
         df[parm_name],
-        0,
+        [0] * len(df),
         yerr=lnl_std,
         fmt=".",
     )
     ax0.axvline(true_vals[parm_name], label="True muz", color="red")
     ax1.axvline(true_vals[parm_name], label="True muz", color="red")
     ax1.set_xlabel(parm_name)
+    ax1.set_ylabel("std(lnl)")
     ax0.set_ylabel("lnl")
     ax0.legend(fontsize=8)
     fig.tight_layout()
