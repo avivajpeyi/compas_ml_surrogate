@@ -14,7 +14,7 @@ else:
 
 generate_set_of_matricies(
     compas_h5_path=compas_h5_path,
-    n=100,
+    n=1000,
     save_images=False,
     outdir="aSF_grid",
     parameters=[
