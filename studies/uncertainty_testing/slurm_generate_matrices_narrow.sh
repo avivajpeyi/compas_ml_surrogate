@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gen_matrices
-#SBATCH --time=20:00:00
+#SBATCH --time=8:00:00
 #SBATCH --output=sampled_datasets/log_narrow.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
