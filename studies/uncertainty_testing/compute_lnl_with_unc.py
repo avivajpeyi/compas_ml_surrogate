@@ -102,7 +102,7 @@ def plot_1d_lnl(df, true_vals, parm_name):
     ax1.errorbar(
         df[parm_name],
         (lnl_mean - lnl_mean.min()) / lnl_mean.min(),
-        yerr=lnl_std / lnl_mean.min(),
+        yerr=abs(lnl_std / lnl_mean.min()),
         fmt=".",
     )
     ax0.axvline(true_vals[parm_name], label="True muz", color="red")
