@@ -30,7 +30,7 @@ def make_matricies_for_different_results(compas_file_regex, outdir, n=10):
         for i, f in tqdm(
             enumerate(compas_files),
             total=len(compas_files),
-            desc="Generating matricies",
+            desc="Generating matrices",
         ):
             logger.info(f"Generating matrix for {f}")
             label = os.path.basename(f).split(".h5")[0].split("_")[-1]
@@ -42,7 +42,7 @@ def make_matricies_for_different_results(compas_file_regex, outdir, n=10):
                     save_images=False,
                     outdir=os.path.join(outdir, f"out_{label}"),
                     parameters=["muz", "sigma0"],
-                    save_h5_fname=f"matricies_{label}.h5",
+                    save_h5_fname=f"{outdir}/matrices_{label}.h5",
                     grid_parameterspace=True,
                 )
             except Exception as e:
