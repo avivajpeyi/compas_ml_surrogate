@@ -6,16 +6,18 @@ from compas_surrogate.logger import logger
 
 
 class GifGenerator:
-    def __init__(self, regex, fname, duration=100, loop=0):
+    def __init__(self, regex=None, fname='anim.gif', duration=100, loop=0, image_fnames=None):
         self.regex = regex
-        self.image_fnames = sorted(glob(regex))
+        if image_fnames is None:
+            image_fnames = sorted(glob(regex))
+        self.image_fnames = image_fnames
         self.fname = fname
         self.duration = duration
         self.loop = loop
 
     @classmethod
-    def make_animation(cls, regex, fname, duration=100, loop=0):
-        gg = cls(regex, fname, duration=duration, loop=loop)
+    def make_animation(cls, regex=None, fname='anim.gif', duration=100, loop=0, image_fnames=None):
+        gg = cls(regex, fname, duration=duration, loop=loop, image_fnames=image_fnames)
         gg.make_gif()
 
     def make_gif(self):
@@ -38,6 +40,8 @@ class GifGenerator:
         else:
             logger.critical(f"No images found for {self.regex}")
 
+        logger.info(f"Saved gif (using {len(self.image_fnames)} images) to {self.fname}.")
 
-def make_gif(regex, fname, duration=100, loop=True):
-    GifGenerator.make_animation(regex, fname, duration=duration, loop=loop)
+
+def make_gif(regex=None, fname='anim.gif', duration=100, loop=True, image_fnames=None):
+    GifGenerator.make_animation(regex, fname, duration=duration, loop=loop, image_fnames=image_fnames)

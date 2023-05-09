@@ -264,10 +264,10 @@ class Universe:
         )
         return uni
 
-    def n_detections(self, duration=1):
+    def n_detections(self, duration=1)->float:
         """Calculate the number of detections in a given duration (in years)"""
         marginalised_detection_rate = np.nansum(self.detection_rate)
-        return int(marginalised_detection_rate * duration)
+        return marginalised_detection_rate * duration
 
     @classmethod
     def from_npz(cls, fname):
@@ -344,7 +344,7 @@ class Universe:
 
     @property
     def param_str(self):
-        sf = ",".join([f"{s:.2f}" for s in self.SF])
+        sf = ",".join([f"{s:.3f}" for s in self.SF])
         return f"SF={sf}, muz={self.muz:.2e}, sigma0={self.sigma0:.2e}"
 
     @property
@@ -620,10 +620,10 @@ class Universe:
             df = df.sort_values("rate", ascending=False)
             if np.sum(df.rate) > 0:
                 n_events = df.sample(
-                    weights=df.rate, n=n_obs, random_state=0, replace=True
+                    weights=df.rate, n=int(n_obs), random_state=0, replace=True
                 )
             else:
-                n_events = df.sample(n=n_obs, random_state=0)
+                n_events = df.sample(n=int(n_obs), random_state=0)
             return n_events[["mc", "z"]].values
         elif sample_using_emcee:
             raise NotImplementedError

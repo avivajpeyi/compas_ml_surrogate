@@ -5,6 +5,7 @@ build
 __pycache__
 output
 *idea
+*.gif
 venv
 *.csv
 .mypy_cache
