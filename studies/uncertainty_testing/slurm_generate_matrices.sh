@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=gen_matrices
 #SBATCH --time=20:00:00
-#SBATCH --output=sampled_datasets/log.log
+#SBATCH --output=sampled_datasets/log_wide.log
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
 #SBATCH --mem-per-cpu=22G
