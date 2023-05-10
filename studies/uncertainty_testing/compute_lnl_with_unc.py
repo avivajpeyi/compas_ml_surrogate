@@ -44,6 +44,10 @@ def make_lnl_table(
                 clean=False,
             )
         )
+        Universe.from_hdf5(matix_paths[i], 20).plot_detection_rate_matrix(
+            fname=f"{outdir}/matrix_{i}.png"
+        )
+
     print("Caches loaded")
     # combine dataframes (rename each lnl column to the matrix id) based on the other columns
     df = caches[0].dataframe.copy()
