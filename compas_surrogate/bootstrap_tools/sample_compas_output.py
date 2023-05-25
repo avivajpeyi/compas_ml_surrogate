@@ -99,6 +99,26 @@ def sample_h5(
         printSummary(output_filepath, output_h5_file)
 
 
+def _sample_seeds(orig_seeds: np.ndarray, n: int, replace: bool = False):
+    new_seeds = []
+    orig_n = len(orig_seeds)
+    if n > orig_n:
+        if replace:
+            additional_seeds = np.random.choice(
+                orig_seeds, size=n - orig_n, replace=replace
+            )
+            new_seeds = np.concatenate([orig_seeds, additional_seeds])
+        else:
+            raise ValueError(
+                "Cannot sample without replacement more than the number of binaries. "
+                "Set replace=True."
+            )
+    else:
+        new_seeds = np.random.choice(orig_seeds, size=n, replace=replace)
+
+    return new_seeds
+
+
 def _sample(h5_file: h5py.File, sample_key: str, sample_values: np.ndarray):
     print("Setting sampled seeds for groups:")
     for group_name, group in h5_file.items():

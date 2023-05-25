@@ -289,7 +289,7 @@ class Universe:
         )
         return uni
 
-    def n_detections(self, duration=1)->float:
+    def n_detections(self, duration=1) -> float:
         """Calculate the number of detections in a given duration (in years)"""
         marginalised_detection_rate = np.nansum(self.detection_rate)
         return marginalised_detection_rate * duration
@@ -424,7 +424,7 @@ class Universe:
 
         """
         os.makedirs(outdir, exist_ok=True)
-        title_txt = f"Detection Rate Matrix ({self.n_systems} systems)\n"
+        title_txt = f"Detection Rate Matrix ({self.n_systems:,} systems)\n"
         if self.binned:
             title_txt = "Binned " + title_txt
         if smoothed_2d_data:
@@ -476,7 +476,9 @@ class Universe:
         ax_2d.set_xlabel("Redshift")
         ax_2d.set_ylabel("Chirp mass ($M_{\odot}$)")
         ax_2d.set_facecolor("black")
-        annote = f"Grid: {rate2d.T.shape}\nN det: {self.n_detections(duration=1)}/yr"
+        annote = (
+            f"Grid: {rate2d.T.shape}\nN det: {self.n_detections(duration=1):.3f}/yr"
+        )
         ax_2d.annotate(
             annote,
             xy=(1, 0),

@@ -3,9 +3,9 @@ import shutil
 
 import h5py
 import numpy as np
-from compas_python_utils.h5sample import sample_h5
 from tqdm.auto import tqdm
 
+from compas_surrogate.bootstrap_tools.sample_compas_output import sample_h5
 from compas_surrogate.logger import logger
 
 DCO_KEY = "BSE_Double_Compact_Objects"
