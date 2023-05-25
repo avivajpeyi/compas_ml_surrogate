@@ -3,6 +3,7 @@ import shutil
 
 import h5py
 import numpy as np
+from bilby.core.prior import Normal
 from tqdm.auto import tqdm
 
 from compas_surrogate.bootstrap_tools.sample_compas_output import sample_h5
@@ -16,6 +17,10 @@ def get_num_binaries(compas_h5_filepath):
         return len(compas_h5_file[DCO_KEY]["SEED"])
 
 
+def get_sample_size(init_n: int):
+    return int(Normal(mu=init_n, sigma=np.sqrt(init_n)).sample())
+
+
 def generate_datasets(in_compas_h5: str, outdir: str, n_copies: int = 10):
     print("starting")
     np.random.seed(0)
@@ -23,7 +28,7 @@ def generate_datasets(in_compas_h5: str, outdir: str, n_copies: int = 10):
         shutil.rmtree(outdir)
     os.makedirs(outdir, exist_ok=False)
     init_n = get_num_binaries(in_compas_h5)
-    sampled_n = int(init_n - np.sqrt(init_n))
+    sampled_n = get_sample_size(init_n)
     base_fn = os.path.basename(in_compas_h5)
     fn_fmt = os.path.join(outdir, base_fn.replace(".h5", "_downsampled_{}.h5"))
     logger.info(f"Sampling {in_compas_h5} to {init_n}->{sampled_n} ({n_copies} copies)")

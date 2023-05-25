@@ -91,7 +91,7 @@ def sample_h5(
 
     with h5py.File(output_filepath, "w") as out_h5_file:
         copyHDF5File(compas_h5_filepath, out_h5_file)
-        sampled_binary_seeds = np.random.choice(binary_seeds, size=n, replace=replace)
+        sampled_binary_seeds = _sample_seeds(binary_seeds, n)
         _sample(out_h5_file, seed_key, sampled_binary_seeds)
 
     print("Sampled file summary:")
@@ -99,22 +99,13 @@ def sample_h5(
         printSummary(output_filepath, output_h5_file)
 
 
-def _sample_seeds(orig_seeds: np.ndarray, n: int, replace: bool = False):
-    new_seeds = []
+def _sample_seeds(orig_seeds: np.ndarray, n: int):
     orig_n = len(orig_seeds)
     if n > orig_n:
-        if replace:
-            additional_seeds = np.random.choice(
-                orig_seeds, size=n - orig_n, replace=replace
-            )
-            new_seeds = np.concatenate([orig_seeds, additional_seeds])
-        else:
-            raise ValueError(
-                "Cannot sample without replacement more than the number of binaries. "
-                "Set replace=True."
-            )
+        additional_seeds = np.random.choice(orig_seeds, size=n - orig_n, replace=False)
+        new_seeds = np.concatenate([orig_seeds, additional_seeds])
     else:
-        new_seeds = np.random.choice(orig_seeds, size=n, replace=replace)
+        new_seeds = np.random.choice(orig_seeds, size=n, replace=False)
 
     return new_seeds
 
