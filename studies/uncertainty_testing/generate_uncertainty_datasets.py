@@ -24,6 +24,9 @@ def get_sample_size(init_n: int):
 def generate_datasets(in_compas_h5: str, outdir: str, seed: int):
     np.random.seed(seed)
 
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     init_n = get_num_binaries(in_compas_h5)
     sampled_n = get_sample_size(init_n)
     base_fn = os.path.basename(in_compas_h5)
