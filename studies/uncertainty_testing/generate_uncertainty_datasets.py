@@ -1,10 +1,10 @@
 import os
 import shutil
 
+import click
 import h5py
 import numpy as np
 from bilby.core.prior import Normal
-from tqdm.auto import tqdm
 
 from compas_surrogate.bootstrap_tools.sample_compas_output import sample_h5
 from compas_surrogate.logger import logger
@@ -21,25 +21,33 @@ def get_sample_size(init_n: int):
     return int(Normal(mu=init_n, sigma=np.sqrt(init_n)).sample())
 
 
-def generate_datasets(in_compas_h5: str, outdir: str, n_copies: int = 10):
-    print("starting")
-    np.random.seed(0)
+def generate_datasets(in_compas_h5: str, outdir: str, seed: int):
+    np.random.seed(seed)
+
     if os.path.exists(outdir):
         shutil.rmtree(outdir)
     os.makedirs(outdir, exist_ok=False)
     init_n = get_num_binaries(in_compas_h5)
     sampled_n = get_sample_size(init_n)
     base_fn = os.path.basename(in_compas_h5)
-    fn_fmt = os.path.join(outdir, base_fn.replace(".h5", "_downsampled_{}.h5"))
-    logger.info(f"Sampling {in_compas_h5} to {init_n}->{sampled_n} ({n_copies} copies)")
-    for i in tqdm(range(n_copies), desc="Sampling"):
-        out_compas_h5 = fn_fmt.format(i)
-        sample_h5(
-            in_compas_h5, out_compas_h5, n=sampled_n, replace=False, seed_group=DCO_KEY
-        )
-        logger.info(f"{out_compas_h5} ({os.stat(out_compas_h5).st_size/1e9:.2f} GB)")
+
+    logger.info(f"Sampling {in_compas_h5} to {init_n}->{sampled_n}")
+    out_compas_h5 = os.path.join(
+        outdir, base_fn.replace(".h5", f"_sampled_seed{seed}.h5")
+    )
+    sample_h5(in_compas_h5, out_compas_h5, n=sampled_n, seed_group=DCO_KEY)
+    logger.info(
+        f"Saved {out_compas_h5} ({os.stat(out_compas_h5).st_size / 1e9:.2f} GB)"
+    )
 
 
-generate_datasets(
-    "/fred/oz101/alej_runs/Z_all/COMPAS_Output.h5", "sampled_datasets", 10
-)
+@click.command()
+@click.argument("compas_path", type=click.Path(exists=True))
+@click.argument("--outdir", type=click.Path(exists=False))
+@click.option("--seed", type=int, default=42)
+def cli(compas_path, outdir, seed):
+    generate_datasets(compas_path, outdir, seed)
+
+
+if __name__ == "__main__":
+    cli()

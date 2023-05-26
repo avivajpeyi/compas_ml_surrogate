@@ -19,7 +19,6 @@ def sample_h5(
     output_filepath: Optional[str] = None,
     n: Optional[int] = None,
     frac: Optional[float] = None,
-    replace: Optional[bool] = False,
     seed_group: Optional[str] = "BSE_System_Parameters",
     seed_key: Optional[str] = "SEED",
 ):
@@ -36,8 +35,6 @@ def sample_h5(
         Number of binaries to sample, by default None.
     frac : Optional[float], optional
         Fraction of binaries to sample, by default None.
-    replace : Optional[bool], optional
-        Sample with or without replacement, by default False.
     seed_group : Optional[str], optional
         Group to get binary seed list to sample from, by default "BSE_System_Parameters".
     seed_key : Optional[str], optional
@@ -74,12 +71,6 @@ def sample_h5(
     if n <= 0:
         raise ValueError("n must be greater than 0.")
 
-    if n > len(binary_seeds) and not replace:
-        raise ValueError(
-            "Cannot sample without replacement more than the number of binaries. "
-            "Set replace=True."
-        )
-
     print(
         f"Sampling {len(binary_seeds)}->{n} ({frac * 100:.2f}%) binaries from "
         f"{compas_h5_filepath} [{seed_group}][{seed_key}].\n"
@@ -102,6 +93,10 @@ def sample_h5(
 def _sample_seeds(orig_seeds: np.ndarray, n: int):
     orig_n = len(orig_seeds)
     if n > orig_n:
+        n_replacements = n - orig_n
+        print(
+            f"Sampling with replacement: {orig_n} no replacement, {n_replacements} w/ replacement."
+        )
         additional_seeds = np.random.choice(orig_seeds, size=n - orig_n, replace=False)
         new_seeds = np.concatenate([orig_seeds, additional_seeds])
     else:
@@ -195,7 +190,6 @@ def main():  # pragma: no cover
         output_filepath=args.output_filepath,
         n=args.n,
         frac=args.frac,
-        replace=args.replace,
         seed_group=args.seed_group,
         seed_key=args.seed_key,
     )
