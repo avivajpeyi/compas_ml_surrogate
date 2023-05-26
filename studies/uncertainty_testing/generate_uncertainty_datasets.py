@@ -43,7 +43,7 @@ def generate_datasets(in_compas_h5: str, outdir: str, seed: int):
 
 @click.command()
 @click.argument("compas_path", type=click.Path(exists=True))
-@click.argument("outdir", type=click.Path(exists=False))
+@click.argument("outdir", type=click.Path)
 @click.argument("seed", type=int, default=42)
 def cli(compas_path, outdir, seed):
     generate_datasets(compas_path, outdir, seed)
