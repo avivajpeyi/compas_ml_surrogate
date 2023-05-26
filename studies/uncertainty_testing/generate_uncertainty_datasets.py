@@ -24,17 +24,19 @@ def get_sample_size(init_n: int):
 def generate_datasets(in_compas_h5: str, outdir: str, seed: int):
     np.random.seed(seed)
 
-    if os.path.exists(outdir):
-        shutil.rmtree(outdir)
-    os.makedirs(outdir, exist_ok=False)
     init_n = get_num_binaries(in_compas_h5)
     sampled_n = get_sample_size(init_n)
     base_fn = os.path.basename(in_compas_h5)
 
-    logger.info(f"Sampling {in_compas_h5} to {init_n}->{sampled_n}")
     out_compas_h5 = os.path.join(
         outdir, base_fn.replace(".h5", f"_sampled_seed{seed}.h5")
     )
+
+    if os.path.exists(out_compas_h5):
+        logger.error(f"{out_compas_h5} already exists, skipping.")
+        return
+
+    logger.info(f"Sampling {in_compas_h5} to {init_n}->{sampled_n}")
     sample_h5(in_compas_h5, out_compas_h5, n=sampled_n, seed_group=DCO_KEY)
     logger.info(
         f"Saved {out_compas_h5} ({os.stat(out_compas_h5).st_size / 1e9:.2f} GB)"
