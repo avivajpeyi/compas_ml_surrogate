@@ -1,10 +1,6 @@
 import random
-import warnings
-
-import numpy as np
 
 from compas_surrogate.inference_runner import run_inference
-from compas_surrogate.utils import now
 
 OUTDIR = "out_surr"
 H5 = "det_matrix.h5"
@@ -12,7 +8,7 @@ random.seed(1)
 
 
 def main():
-    n_pts = [500]
+    n_pts = [250]
     for n in n_pts:
         outdir = f"{OUTDIR}/out_n_{n}"
         run_inference(
@@ -22,6 +18,7 @@ def main():
             det_matrix_h5=H5,
             universe_id=5000,
             clean=False,
+            sampler="emcee",
         )
 
 

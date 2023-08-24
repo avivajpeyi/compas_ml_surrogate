@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import gpflow
 import numpy as np

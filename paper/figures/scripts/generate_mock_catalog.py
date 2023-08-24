@@ -17,6 +17,7 @@ def main():
     mock_cat = uni.sample_possible_event_matrix()
     fname = "../mock_events.png"
     mock_cat.plot(save=False).savefig(fname)
+
     logger.success(f"Plot saved to {fname}")
 
 

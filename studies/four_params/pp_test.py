@@ -15,18 +15,18 @@ def run_analyses_and_make_pp_plot(outdir, h5, n_training, n_injections):
         n_training=n_training,
         n_injections=n_injections,
     )
-    runner.generate_injection_file(n=n_injections)
+
+    # runner.generate_injection_file(n=n_injections)
     runner.run()
     pp_results = PPresults.from_results(f"{outdir}/out*/*.json")
     pp_results.plot(f"{outdir}/pp_plot.png")
 
 
-
 if __name__ == "__main__":
-    for n_train in [500, 1000, 2000, 2500, 3000]:
+    for n_train in [3000, 1000]:
         run_analyses_and_make_pp_plot(
-            outdir=f"out_pp_ntrain_{n_train}_{now()}",
+            outdir=f"out_pp_ntrain_{n_train}",
             h5=H5,
             n_training=n_train,
-            n_injections=500,
+            n_injections=10,
         )

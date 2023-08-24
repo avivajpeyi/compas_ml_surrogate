@@ -1,5 +1,7 @@
+from collections import namedtuple
 from typing import Dict, List, Optional, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -7,18 +9,16 @@ from compas_surrogate.logger import logger
 from compas_surrogate.plotting import safe_savefig
 from compas_surrogate.plotting.corner import plot_corner
 
-from collections import namedtuple
-
 
 class LikelihoodCache(object):
     """Stores the likelihood values for a list of parameters (Optionally stores true model parameters)"""
 
     def __init__(
-            self,
-            lnl: np.ndarray,
-            params: np.ndarray,
-            true_params: Optional[np.array] = None,
-            true_lnl: Optional[float] = None,
+        self,
+        lnl: np.ndarray,
+        params: np.ndarray,
+        true_params: Optional[np.array] = None,
+        true_lnl: Optional[float] = None,
     ):
         self.lnl = lnl
         self.params = params
@@ -82,6 +82,7 @@ class LikelihoodCache(object):
         if self.true_params is None:
             return {}
         return dict(zip(param_names, self.true_params))
+
     def get_true_param_lnl(self) -> float:
         """Get the likelihood of the true parameters"""
         if self.true_lnl is None:
@@ -129,6 +130,7 @@ class LikelihoodCache(object):
         )
         if fname:
             safe_savefig(fig, fname)
+            plt.close(fig)
         else:
             return fig
 
@@ -159,7 +161,9 @@ class LikelihoodCache(object):
         del max_lnl_row["lnl"]
         return max_lnl_row
 
-    def get_sample_histograms(self, bins=None) -> Dict[str, namedtuple("Hist", ["hist", "bin_edges"])]:
+    def get_sample_histograms(
+        self, bins=None
+    ) -> Dict[str, namedtuple("Hist", ["hist", "bin_edges"])]:
         df = self.dataframe
         Hist = namedtuple("Hist", ["hist", "bin_edges"])
         hists = {}

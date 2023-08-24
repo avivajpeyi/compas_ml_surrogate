@@ -17,9 +17,8 @@ from ..data_generation.detection_matrix_generator import (
 from ..data_generation.likelihood_cacher import LikelihoodCache, get_training_lnl_cache
 from ..logger import logger
 from ..plotting.image_utils import horizontal_concat
-from ..surrogate.models import DeepGPModel, SklearnGPModel
+from ..surrogate.models import SklearnGPModel
 from ..surrogate.surrogate_likelihood import SurrogateLikelihood
-
 
 
 def get_surrogate_model(
@@ -31,10 +30,10 @@ def get_surrogate_model(
     """
     Get the ML surrogate model
     """
-    if clean and os.path.exists(model_dir):
+    if clean and gp_model.saved_model_exists(model_dir):
         shutil.rmtree(model_dir)
 
-    if os.path.exists(model_dir):
+    if gp_model.saved_model_exists(model_dir):
         logger.info(f"Loading model from {model_dir}")
         model = gp_model.load(model_dir)
     else:

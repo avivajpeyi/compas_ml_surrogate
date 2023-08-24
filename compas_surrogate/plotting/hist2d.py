@@ -112,6 +112,7 @@ def plot_probs(
     if fname:
         fig.tight_layout()
         fig.savefig(fname)
+        plt.close(fig)
     else:
         return fig, axes
 

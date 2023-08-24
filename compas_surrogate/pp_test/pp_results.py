@@ -63,6 +63,7 @@ class PPresults:
     def plot(self, fname="pp_plot.png"):
         fig, pvals = plot_credible_intervals(self.ci)
         fig.savefig(fname)
+        plt.close(fig)
         return fig, pvals
 
 

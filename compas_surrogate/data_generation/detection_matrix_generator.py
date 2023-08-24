@@ -75,7 +75,7 @@ def compile_matricies_into_hdf(npz_regex, fname="detection_matricies.h5") -> Non
     with h5py.File(fname, "w") as f:
         f.attrs["compas_h5_path"] = str(base_uni.compas_h5_path)
         f.attrs["n_systems"] = base_uni.n_systems
-        f.attrs["redshifts"] = base_uni.redshifts
+        f.attrs["redshifts"] = base_uni.redshift
         f.attrs["chirp_masses"] = base_uni.chirp_masses
         f.attrs["parameter_labels"] = base_uni.param_names
         f.create_dataset("detection_matricies", (n, *base_uni.detection_rate.shape))
@@ -133,7 +133,9 @@ def generate_set_of_matricies(
         os.makedirs(outdir, exist_ok=True)
 
     if os.path.isfile(save_h5_fname):
-        logger.info(f"HDF file {save_h5_fname} already exists, skipping matrix generation")
+        logger.info(
+            f"HDF file {save_h5_fname} already exists, skipping matrix generation"
+        )
         return
 
     sf_sample_fname = os.path.join(outdir, "sf_samples.csv")

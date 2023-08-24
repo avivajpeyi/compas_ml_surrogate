@@ -3,8 +3,11 @@ import pickle
 from typing import Optional
 
 import numpy as np
+from scipy.stats import halfnorm
+from sklearn.base import BaseEstimator
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
+from sklearn.metrics import r2_score
 
 from .model import Model
 
@@ -16,17 +19,23 @@ class SklearnGPModel(Model):
         self._model = None
         self.trained = False
         self.input_dim = None
-        kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
+        self.kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e3))
+        self.scalar = None
 
         # # diff between every pair of train_out values
         # err = np.min(np.diff(train_out, axis=0) ** 2)
 
+        # alpha:
+        # It can also be interpreted as the variance of additional
+        # Gaussian measurement noise on the training observations.
+
         self._model = GaussianProcessRegressor(
-            kernel=kernel,
+            kernel=self.kernel,
             random_state=0,
             copy_X_train=False,
             n_restarts_optimizer=10,
-            alpha=10,
+            alpha=0.1,
+            normalize_y=True,
         )
 
     def train(
@@ -37,24 +46,35 @@ class SklearnGPModel(Model):
         savedir: Optional[str] = None,
         extra_kwgs={},
     ) -> None:
-        """Train the model."""
+        """Train the model.
+
+        https://scikit-learn.org/dev/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html
+        GaussianProcessRegressor(
+            kernel=None, *, alpha=1e-10,
+            optimizer='fmin_l_bfgs_b',
+            n_restarts_optimizer=0,
+            normalize_y=False, copy_X_train=True,
+            n_targets=None, random_state=None
+        )
+
+
+        """
         (
             train_in,
             test_in,
             train_out,
             test_out,
         ) = self._preprocess_and_split_data(inputs, outputs)
-        kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
 
         # diff between every pair of train_out values
-        err = np.min(np.diff(train_out, axis=0) ** 2)
-
+        err = halfnorm.rvs(loc=0, scale=0.5, size=len(train_in))
         self._model = GaussianProcessRegressor(
-            kernel=kernel,
+            kernel=self.kernel,
             random_state=0,
             copy_X_train=False,
             n_restarts_optimizer=10,
-            alpha=10,
+            alpha=err,
+            normalize_y=True,
         )
         self._model.fit(train_in, train_out)
 
@@ -64,7 +84,8 @@ class SklearnGPModel(Model):
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         """Predict the output of the model for the given input."""
-        y_mean, y_std = self._model.predict(x, return_std=True)
+        x_scaled = self._preprocess_input(x)
+        y_mean, y_std = self._model.predict(x_scaled, return_std=True)
         y_var = y_std**2
         y_lower = y_mean - 1.96 * np.sqrt(y_var)
         y_upper = y_mean + 1.96 * np.sqrt(y_var)
@@ -76,18 +97,38 @@ class SklearnGPModel(Model):
             raise ValueError("Model not trained, no point saving")
         os.makedirs(savedir, exist_ok=True)
         with open(f"{savedir}/{MODEL_SAVE_FILE}", "wb") as f:
-            pickle.dump(self._model, f)
+            pickle.dump([self._model, self.scaler], f)
 
     @classmethod
     def load(cls, savedir: str) -> "Model":
         """Load a model from a dir."""
-        filename = f"{savedir}/{MODEL_SAVE_FILE}"
-        with open(filename, "rb") as f:
+        with open(cls.model_fn(savedir), "rb") as f:
             loaded_model = pickle.load(f)
         model = cls()
-        model._model = loaded_model
+        model._model = loaded_model[0]
+        model.scaler = loaded_model[1]
         model.trained = True
         return model
 
+    @staticmethod
+    def saved_model_exists(savedir: str) -> bool:
+        """Check if a model exists in the given directory."""
+        return os.path.exists(SklearnGPModel.model_fn(savedir))
+
+    @staticmethod
+    def model_fn(savedir: str):
+        return f"{savedir}/{MODEL_SAVE_FILE}"
+
     def get_model(self):
         return self._model
+
+
+# Custom callback to save R^2 scores during training
+class R2Callback(BaseEstimator):
+    def __init__(self):
+        self.r2_scores = []
+
+    def on_epoch_end(self, epoch, logs=None):
+        y_pred = self.model.predict(self.validation_data[0])
+        r2 = r2_score(self.validation_data[1], y_pred)
+        self.r2_scores.append(r2)

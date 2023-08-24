@@ -2,6 +2,7 @@ import contextlib
 import logging
 import os
 import random
+import traceback
 import warnings
 from functools import partialmethod
 from time import time
@@ -35,6 +36,7 @@ class PPrunner:
         det_matricies_fname: str,
         n_training: int = 500,
         n_injections: int = 100,
+        sampler="emcee",
     ):
         """
         Parameters
@@ -53,6 +55,7 @@ class PPrunner:
         self.det_matricies_fname = det_matricies_fname
         self.n_training = n_training
         self.n_inj = n_injections
+        self.sampler = sampler
 
     def get_injections(self) -> pd.DataFrame:
         """Get the injection dataframe from the inj file"""
@@ -94,14 +97,15 @@ class PPrunner:
     def _run_ith_job(self, i):
         """Run inference for a given universe id"""
         outdir = f"{self.outdir}/out_inj_{i}"
-        with contextlib.redirect_stdout(None), contextlib.redirect_stderr(None):
-            t0 = time()
-            run_inference(
-                outdir=outdir,
-                universe_id=i,
-                n=self.n_training,
-                det_matrix_h5=self.det_matricies_fname,
-            )
+        # with contextlib.redirect_stdout(None), contextlib.redirect_stderr(None):
+        t0 = time()
+        run_inference(
+            outdir=outdir,
+            universe_id=i,
+            n=self.n_training,
+            det_matrix_h5=self.det_matricies_fname,
+            sampler=self.sampler,
+        )
         self.update_inj_status(i, time() - t0)
 
     def run(self):
@@ -125,3 +129,4 @@ class PPrunner:
                 self._run_ith_job(i)
             except Exception as e:
                 logger.error(f"Failed to run inference for i={i}: {e}")
+                logger.error(traceback.format_exc())

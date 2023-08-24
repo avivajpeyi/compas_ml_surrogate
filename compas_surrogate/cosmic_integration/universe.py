@@ -58,6 +58,7 @@ class MockPopulation:
             if fname == "":
                 fname = self.universe._get_fname(outdir, extra="mock_events", ext="png")
             safe_savefig(fig, fname)
+            plt.close(fig)
         return fig
 
     def hist_mock_2d_events(self):
@@ -264,8 +265,7 @@ class Universe:
 
         sorted_idx = np.argsort(COMPAS.mChirp)
         chirp_masses = COMPAS.mChirp[sorted_idx]
-        redshift_mask = redshifts < max(Z_RANGE)
-        redshifts = redshifts[redshift_mask]
+        redshifts = redshifts[redshifts < max(Z_RANGE)]
         if (len(chirp_masses), len(redshifts)) != detection_rate.shape:
             raise ValueError(
                 f"Shape of detection rate matrix ({detection_rate.shape}) "
@@ -289,7 +289,7 @@ class Universe:
         )
         return uni
 
-    def n_detections(self, duration=1)->float:
+    def n_detections(self, duration=1) -> float:
         """Calculate the number of detections in a given duration (in years)"""
         marginalised_detection_rate = np.nansum(self.detection_rate)
         return marginalised_detection_rate * duration
@@ -476,7 +476,9 @@ class Universe:
         ax_2d.set_xlabel("Redshift")
         ax_2d.set_ylabel("Chirp mass ($M_{\odot}$)")
         ax_2d.set_facecolor("black")
-        annote = f"Grid: {rate2d.T.shape}\nN det: {self.n_detections(duration=1)}/yr"
+        annote = (
+            f"Grid: {rate2d.T.shape}\nN det: {self.n_detections(duration=1):.2f}/yr"
+        )
         ax_2d.annotate(
             annote,
             xy=(1, 0),
