@@ -28,17 +28,19 @@ INSTALL_REQUIRES = [
     "george",
     "scikit-learn",
     "arviz",
-    "fpdf"
+    "fpdf",
 ]
 EXTRA_REQUIRE = {
-    'gpflow': ['gpflow'],
-    'test': ["pytest>=3.6"],
+    "gpflow": ["gpflow"],
+    "test": ["pytest>=3.6"],
 }
 EXTRA_REQUIRE["dev"] = EXTRA_REQUIRE["test"] + [
     "pre-commit",
     "flake8",
     "black<=21.9b0",
     "isort",
+    "ipython-autotime",
+    "memory_profiler",
 ]
 
 HERE = os.path.dirname(os.path.realpath(__file__))

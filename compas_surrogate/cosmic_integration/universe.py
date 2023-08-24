@@ -424,7 +424,7 @@ class Universe:
 
         """
         os.makedirs(outdir, exist_ok=True)
-        title_txt = f"Detection Rate Matrix ({self.n_systems} systems)\n"
+        title_txt = f"Detection Rate Matrix ({self.n_systems:,} systems)\n"
         if self.binned:
             title_txt = "Binned " + title_txt
         if smoothed_2d_data:
@@ -477,7 +477,7 @@ class Universe:
         ax_2d.set_ylabel("Chirp mass ($M_{\odot}$)")
         ax_2d.set_facecolor("black")
         annote = (
-            f"Grid: {rate2d.T.shape}\nN det: {self.n_detections(duration=1):.2f}/yr"
+            f"Grid: {rate2d.T.shape}\nN det: {self.n_detections(duration=1):.3f}/yr"
         )
         ax_2d.annotate(
             annote,
