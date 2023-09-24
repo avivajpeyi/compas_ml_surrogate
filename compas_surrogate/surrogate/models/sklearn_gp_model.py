@@ -16,11 +16,8 @@ MODEL_SAVE_FILE = "model.pkl"
 
 class SklearnGPModel(Model):
     def __init__(self):
-        self._model = None
-        self.trained = False
-        self.input_dim = None
+        super().__init__()
         self.kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e3))
-        self.scalar = None
 
         # # diff between every pair of train_out values
         # err = np.min(np.diff(train_out, axis=0) ** 2)
@@ -66,7 +63,6 @@ class SklearnGPModel(Model):
             test_out,
         ) = self._preprocess_and_split_data(inputs, outputs)
 
-        # diff between every pair of train_out values
         err = halfnorm.rvs(loc=0, scale=0.5, size=len(train_in))
         self._model = GaussianProcessRegressor(
             kernel=self.kernel,
@@ -84,7 +80,8 @@ class SklearnGPModel(Model):
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         """Predict the output of the model for the given input."""
-        x_scaled = self._preprocess_input(x)
+        # x_scaled = self._preprocess_input(x)
+        x_scaled = x  # TODO: bug with scaling -- i might be scaling twice
         y_mean, y_std = self._model.predict(x_scaled, return_std=True)
         y_var = y_std**2
         y_lower = y_mean - 1.96 * np.sqrt(y_var)
@@ -121,14 +118,3 @@ class SklearnGPModel(Model):
 
     def get_model(self):
         return self._model
-
-
-# Custom callback to save R^2 scores during training
-class R2Callback(BaseEstimator):
-    def __init__(self):
-        self.r2_scores = []
-
-    def on_epoch_end(self, epoch, logs=None):
-        y_pred = self.model.predict(self.validation_data[0])
-        r2 = r2_score(self.validation_data[1], y_pred)
-        self.r2_scores.append(r2)

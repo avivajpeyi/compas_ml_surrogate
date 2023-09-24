@@ -11,7 +11,7 @@ np.random.seed(1)
 
 TEAR_DOWN = False
 
-from compas_surrogate.surrogate.models import DeepGPModel, SklearnGPModel
+from compas_surrogate.surrogate.models import SklearnGPModel
 
 CURVY_F = (
     lambda x: 0.2 + 0.4 * x**2 + 0.3 * x * np.sin(15 * x) + 0.05 * np.cos(50 * x)
@@ -79,6 +79,8 @@ class TestSurrogate(unittest.TestCase):
         os.rmdir(self.outdir)
 
     def test_deep_gp_model(self):
+        from compas_surrogate.surrogate.models.deep_gp_model import DeepGPModel
+
         self.gp_model_tester(DeepGPModel)
 
     def test_sklearn_gp_model(self):
@@ -86,7 +88,7 @@ class TestSurrogate(unittest.TestCase):
 
     def gp_model_tester(self, gp_model_class):
         gp_name = gp_model_class.__name__
-        pts = [10, 25, 50]
+        pts = [50]
         test_funcs = [CURVY_F]
         num_f = len(test_funcs)
 

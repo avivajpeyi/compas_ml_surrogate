@@ -22,6 +22,7 @@ class Model(ABC, ModelMetrics):
         self._model = None
         self.trained = False
         self.input_dim = None
+        self.scaler = StandardScaler()
 
     @staticmethod
     @abstractmethod
@@ -100,8 +101,9 @@ class Model(ABC, ModelMetrics):
         :return: (train_in, test_in, train_out, test_out)
         """
 
-        self.scaler = StandardScaler()
-        input_scaled = self.scaler.fit_transform(input)
+        # self.scaler = StandardScaler()
+        # input_scaled = self.scaler.fit_transform(input)
+        input_scaled = input
 
         # check shape of input and output are the same
         if input_scaled.shape[0] != output.shape[0]:
