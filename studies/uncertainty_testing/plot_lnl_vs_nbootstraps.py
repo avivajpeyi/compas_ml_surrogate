@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from compas_ml_surrogate.compas_surrogate.cosmic_integration.universe import (
+from compas_surrogate.cosmic_integration.universe import (
     MockPopulation,
     Universe,
 )
@@ -41,7 +41,7 @@ fig.savefig(f"{outdir}/mock_pop.png")
 
 lnl = 0
 bootstrapped_lnls = []
-for i in range(30):
+for i in range(300):
     uni_file = f"{outdir}/v{i}.h5"
     uni = Universe.from_h5(uni_file)
     lnl = ln_likelihood(
