@@ -35,7 +35,7 @@ def ln_mcz_grid_likelihood(mcz_obs: np.ndarray, model_prob_func: Callable) -> fl
 def ln_likelihood(
     mcz_obs: np.ndarray,
     model_prob_func: Callable,
-    n_model: int,
+    n_model: float,
     detailed=False,
 ) -> Union[float, tuple]:
     poisson_lnl = ln_poisson_likelihood(len(mcz_obs), n_model)

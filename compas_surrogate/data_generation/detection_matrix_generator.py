@@ -32,14 +32,20 @@ def generate_matrix(compas_h5_path, sf_sample, save_images=False, outdir=".", fn
     ]
     muz = sf_sample.get("muz", DEFAULT_SF_PARAMETERS["muz"])
     sigma0 = sf_sample.get("sigma0", DEFAULT_SF_PARAMETERS["sigma0"])
-    sf_params = dict(SF=SF, muz=muz, sigma0=sigma0)
-    uni = Universe.simulate(compas_h5_path, **sf_params)
-    binned_uni = uni.bin_detection_rate()
-    binned_uni.save(outdir=outdir, fname=fname)
+    sf_params = dict(aSF=SF[0], dSF=SF[-1], mu_z=muz, sigma_0=sigma0)
+    uni = Universe.from_compas_output(
+        compas_path=compas_h5_path,
+        cosmological_parameters=sf_params,
+        max_detectable_redshift=0.6,
+        redshift_bins=np.linspace(0, 0.6, 100),
+        chirp_mass_bins=np.linspace(3, 40, 50),
+        outdir=outdir,
+    )
+    uni.save(fname=fname)
 
     if save_images:
-        uni.plot_detection_rate_matrix(outdir=outdir)
-        binned_uni.plot_detection_rate_matrix(outdir=outdir)
+        fig = uni.plot()
+        fig.savefig(os.path.join(outdir, f"{uni.label}.png"))
 
 
 def generate_gifs(outdir="."):
@@ -68,19 +74,20 @@ def compile_matricies_into_hdf(npz_regex, fname="detection_matricies.h5") -> Non
     n = len(npz_files)
     if n == 0:
         raise ValueError(f"No files found with regex: {npz_regex}")
-    logger.info(f"Compiling {n} matricies into hdf file --> {fname}")
+    logger.info(f"Compiling {n} matrices into hdf file --> {fname}")
 
     base_uni = Universe.from_npz(npz_files[0])
 
     with h5py.File(fname, "w") as f:
-        f.attrs["compas_h5_path"] = str(base_uni.compas_h5_path)
+        f.attrs["compas_path"] = str(base_uni.compas_h5_path)
         f.attrs["n_systems"] = base_uni.n_systems
-        f.attrs["redshifts"] = base_uni.redshift
-        f.attrs["chirp_masses"] = base_uni.chirp_masses
-        f.attrs["parameter_labels"] = base_uni.param_names
+        f.attrs["n_bbh"] = base_uni.n_bbh
+        f.attrs["redshifts"] = base_uni.redshift_bins
+        f.attrs["chirp_masses"] = base_uni.chirp_mass_bins
+        f.attrs["parameter_labels"] = base_uni.para
         f.create_dataset("detection_matricies", (n, *base_uni.detection_rate.shape))
         f.create_dataset("parameters", (n, *base_uni.param_list.shape))
-        for i in tqdm(range(n), "Writing matricies to hdf file"):
+        for i in tqdm(range(n), "Writing matrices to hdf file"):
             uni = Universe.from_npz(npz_files[i])
             f["detection_matricies"][i, :, :] = uni.detection_rate
             f["parameters"][i, :] = uni.param_list
