@@ -3,10 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from compas_surrogate.cosmic_integration.universe import (
-    MockPopulation,
-    Universe,
-)
+from compas_surrogate.cosmic_integration.universe import MockPopulation, Universe
 from compas_surrogate.data_generation.likelihood_cacher import ln_likelihood
 
 LOCAL_PATH = "/Users/avaj0001/Documents/projects/compas_dev/quasir_compass_blocks/data/COMPAS_Output.h5"
@@ -30,10 +27,12 @@ for i in range(3):
             outdir=outdir,
             redshift_bins=np.linspace(0, 0.6, 100),
             chirp_mass_bins=np.linspace(3, 40, 50),
-            cosmological_parameters=dict(aSF=0.01, dSF=4.70, mu_z=-.3, sigma_z=0, sigma_0=0.4)
+            cosmological_parameters=dict(
+                aSF=0.01, dSF=4.70, mu_z=-0.3, sigma_z=0, sigma_0=0.4
+            ),
         )
         uni.save(fname=uni_file)
-        if i==0:
+        if i == 0:
             fig = uni.plot()
             fig.savefig(f"{outdir}/v0.png")
 
