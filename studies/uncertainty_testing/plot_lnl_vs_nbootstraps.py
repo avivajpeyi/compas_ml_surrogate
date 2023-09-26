@@ -18,20 +18,24 @@ else:
     PATH = LOCAL_PATH
 
 #
-outdir = "out"
-for i in range(30):
+outdir = "out1"
+for i in range(3):
     np.random.seed(i)
     uni_file = f"{outdir}/v{i}.h5"
 
     if not os.path.exists(uni_file):
         uni = Universe.from_compas_output(
             PATH,
-            n_bootstrapped_matrices=20,
+            n_bootstrapped_matrices=1,
             outdir=outdir,
             redshift_bins=np.linspace(0, 0.6, 100),
             chirp_mass_bins=np.linspace(3, 40, 50),
+            cosmological_parameters=dict(aSF=0.01, dSF=4.70, mu_z=-.3, sigma_z=0, sigma_0=0.4)
         )
         uni.save(fname=uni_file)
+        if i==0:
+            fig = uni.plot()
+            fig.savefig(f"{outdir}/v0.png")
 
 uni = Universe.from_h5(f"{outdir}/v0.h5")
 mock_pop = MockPopulation.sample_possible_event_matrix(uni)
@@ -41,7 +45,7 @@ fig.savefig(f"{outdir}/mock_pop.png")
 
 lnl = 0
 bootstrapped_lnls = []
-for i in range(300):
+for i in range(3):
     uni_file = f"{outdir}/v{i}.h5"
     uni = Universe.from_h5(uni_file)
     lnl = ln_likelihood(
