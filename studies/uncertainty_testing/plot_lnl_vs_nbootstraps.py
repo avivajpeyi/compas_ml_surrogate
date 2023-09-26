@@ -16,14 +16,16 @@ else:
 
 #
 outdir = "out1"
-for i in range(3):
+N_matrices  = 50
+N_bootstraps = 20
+for i in range(N_matrices):
     np.random.seed(i)
     uni_file = f"{outdir}/v{i}.h5"
 
     if not os.path.exists(uni_file):
         uni = Universe.from_compas_output(
             PATH,
-            n_bootstrapped_matrices=1,
+            n_bootstrapped_matrices=N_bootstraps,
             outdir=outdir,
             redshift_bins=np.linspace(0, 0.6, 100),
             chirp_mass_bins=np.linspace(3, 40, 50),
@@ -44,7 +46,7 @@ fig.savefig(f"{outdir}/mock_pop.png")
 
 lnl = 0
 bootstrapped_lnls = []
-for i in range(3):
+for i in range(N_matrices):
     uni_file = f"{outdir}/v{i}.h5"
     uni = Universe.from_h5(uni_file)
     lnl = ln_likelihood(
