@@ -45,7 +45,7 @@ def generate_matricies(outdir="out", N_matrices=50, N_bootstraps=20):
 
 def compute_lnl_and_ndet(outdir, matrix_regex):
     matrix_files = glob.glob(f"{outdir}/{matrix_regex}")
-    mock_pop = MockPopulation.load(f"{outdir}/mock_pop.npz")
+    mock_pop = MockPopulation.from_npz(f"{outdir}/mock_pop.npz")
 
     # get main LnL and Ndet to compare bootstraps to
     uni = Universe.from_h5(matrix_files[0])
